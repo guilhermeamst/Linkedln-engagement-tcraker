@@ -16,7 +16,6 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
-from src.core.config import load_config
 from src.core.logger import get_logger
 from src.database.database import DatabaseManager
 from src.repository.engagement_repository import EngagementRepository
@@ -116,12 +115,21 @@ st.markdown("""
 #  Inicialização (cached)
 # --------------------------------------------------------------------------- #
 
+def _get_db_path() -> Path:
+    """Lê DB_PATH de st.secrets (Streamlit Cloud) ou variável de ambiente (local)."""
+    import os
+    try:
+        db_name = st.secrets.get("DB_PATH", os.getenv("DB_PATH", "linkedin_engagement.db"))
+    except Exception:
+        db_name = os.getenv("DB_PATH", "linkedin_engagement.db")
+    return ROOT / db_name
+
+
 @st.cache_resource(show_spinner=False)
 def _init_analytics() -> tuple[AnalyticsService | None, str | None]:
     """Inicializa o AnalyticsService uma única vez por sessão."""
     try:
-        config    = load_config()
-        db        = DatabaseManager(config.database.db_path)
+        db        = DatabaseManager(_get_db_path())
         db.create_tables()
         eng_repo  = EngagementRepository(db)
         post_repo = PostRepository(db)
@@ -465,9 +473,9 @@ def main() -> None:
         st.error(f"Erro ao carregar dados: {erro}")
         st.info(
             "Verifique se:\n"
-            "1. O arquivo `.env` está configurado corretamente.\n"
-            "2. O banco de dados existe (execute `scripts/coletar_engajamento.py` primeiro).\n"
-            "3. As variáveis `LINKEDIN_EMAIL`, `LINKEDIN_PASSWORD` e `LINKEDIN_COMPANY_URL` estão definidas."
+            "1. O banco de dados `linkedin_engagement.db` está presente no repositório.\n"
+            "2. No Streamlit Cloud: configure `DB_PATH` em **App Settings → Secrets** (se necessário).\n"
+            "3. Localmente: o arquivo `.env` está configurado corretamente."
         )
         return
 
