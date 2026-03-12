@@ -12,7 +12,11 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 LOG_DIR = BASE_DIR / "logs"
-LOG_DIR.mkdir(exist_ok=True)
+try:
+    LOG_DIR.mkdir(exist_ok=True)
+except OSError:
+    LOG_DIR = Path("/tmp/linkedin_tracker_logs")
+    LOG_DIR.mkdir(exist_ok=True)
 
 LOG_FORMAT = "%(asctime)s | %(levelname)-8s | %(name)-30s | %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -34,29 +38,31 @@ def _configure_root_logger() -> None:
     console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
 
-    # Handler para arquivo rotativo (DEBUG e acima)
-    file_handler = RotatingFileHandler(
-        filename=LOG_DIR / "linkedin_tracker.log",
-        maxBytes=5 * 1024 * 1024,  # 5 MB
-        backupCount=5,
-        encoding="utf-8",
-    )
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
+    try:
+        file_handler = RotatingFileHandler(
+            filename=LOG_DIR / "linkedin_tracker.log",
+            maxBytes=5 * 1024 * 1024,
+            backupCount=5,
+            encoding="utf-8",
+        )
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
 
-    # Handler de erros separado para facilitar diagnóstico
-    error_handler = RotatingFileHandler(
-        filename=LOG_DIR / "errors.log",
-        maxBytes=2 * 1024 * 1024,  # 2 MB
-        backupCount=3,
-        encoding="utf-8",
-    )
-    error_handler.setLevel(logging.ERROR)
-    error_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
+        error_handler = RotatingFileHandler(
+            filename=LOG_DIR / "errors.log",
+            maxBytes=2 * 1024 * 1024,
+            backupCount=3,
+            encoding="utf-8",
+        )
+        error_handler.setLevel(logging.ERROR)
+        error_handler.setFormatter(logging.Formatter(LOG_FORMAT, DATE_FORMAT))
+
+        root.addHandler(file_handler)
+        root.addHandler(error_handler)
+    except OSError:
+        pass  # Filesystem não disponível para escrita (ex: Streamlit Cloud)
 
     root.addHandler(console_handler)
-    root.addHandler(file_handler)
-    root.addHandler(error_handler)
 
     _configured = True
 
