@@ -4,7 +4,8 @@
       "Bash(wc -l \"c:/Users/guilhermeam/OneDrive - Armco do Brasil S.A/Perfil/Documentos/Organização/ARMCO/Linkdeln Engagement Tcraker \\(opc 1\\)/src/scraper/linkedin_scraper.py\")",
       "Bash(taskkill /F /IM python.exe)",
       "Bash(taskkill /F /IM streamlit.exe)",
-      "Bash(taskkill //F //IM python.exe)"
+      "Bash(taskkill //F //IM python.exe)",
+      "Bash(python -c \":*)"
     ]
   }
 }

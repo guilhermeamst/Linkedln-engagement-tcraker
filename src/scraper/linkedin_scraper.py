@@ -1474,13 +1474,33 @@ class LinkedInScraper:
             try:
                 modal_loc.first.wait_for(state="visible", timeout=8000)
                 modal = modal_loc.first
-                scroll_sem_novos = 0
+                altura_anterior = -1
+                sem_crescimento = 0
+                MAX_SEM_CRESCIMENTO = 3  # para após 3 rodadas sem novo conteúdo
 
-                while scroll_sem_novos < 6:
-                    novos = 0
+                while sem_crescimento < MAX_SEM_CRESCIMENTO:
+                    # Rola até o fim absoluto do modal
+                    try:
+                        altura_atual = modal.evaluate(
+                            "el => { el.scrollTop = el.scrollHeight; return el.scrollHeight; }"
+                        )
+                    except Exception:
+                        altura_atual = altura_anterior
+
+                    # Aguarda o LinkedIn carregar mais itens após o scroll
+                    time.sleep(5.0)
+
+                    # Rola até o fim novamente para revelar os itens recém-carregados
+                    try:
+                        nova_altura = modal.evaluate(
+                            "el => { el.scrollTop = el.scrollHeight; return el.scrollHeight; }"
+                        )
+                    except Exception:
+                        nova_altura = altura_atual
+
+                    # Coleta todos os usuários visíveis (incluindo os novos)
                     pares = _coletar_links_de_perfil(modal, hrefs)
                     for href, nome in pares:
-                        novos += 1
                         engagements.append(Engagement(
                             usuario=nome,
                             usuario_id=_gerar_hash_usuario(href),
@@ -1488,12 +1508,19 @@ class LinkedInScraper:
                             post_id=post.post_id,
                             data_interacao=post.data_post,
                         ))
-                    scroll_sem_novos = 0 if novos > 0 else scroll_sem_novos + 1
-                    try:
-                        modal.evaluate("el => el.scrollTop += 600")
-                    except Exception:
-                        pass
-                    time.sleep(5.0)  # aguarda próximo lote de compartilhamentos carregar
+
+                    if nova_altura <= altura_anterior:
+                        sem_crescimento += 1
+                    else:
+                        sem_crescimento = 0
+
+                    logger.debug(
+                        "Post %s shares: %d coletados | altura %d → %d | paradas: %d/%d",
+                        post.post_id, len(engagements),
+                        altura_anterior, nova_altura,
+                        sem_crescimento, MAX_SEM_CRESCIMENTO,
+                    )
+                    altura_anterior = nova_altura
 
                 self._fechar_modal()
                 return engagements

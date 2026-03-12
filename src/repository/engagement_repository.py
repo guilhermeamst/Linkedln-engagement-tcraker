@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from datetime import date
-from typing import List
+from typing import Dict, List
 
 import pandas as pd
 from sqlalchemy import func, text
@@ -60,6 +60,9 @@ class IEngagementRepository(ABC):
 
     @abstractmethod
     def get_engajamento_por_post_dataframe(self) -> pd.DataFrame: ...
+
+    @abstractmethod
+    def contar_por_post_e_tipo(self, post_id: str) -> Dict[str, int]: ...
 
 
 # --------------------------------------------------------------------------- #
@@ -148,6 +151,19 @@ class EngagementRepository(IEngagementRepository):
     def contar_total(self) -> int:
         with self._db.get_session() as session:
             return session.query(func.count(EngagementORM.id)).scalar() or 0
+
+    def contar_por_post_e_tipo(self, post_id: str) -> Dict[str, int]:
+        """Retorna {tipo: contagem} para as interações salvas de um post."""
+        sql = text("""
+            SELECT tipo, COUNT(*) AS quantidade
+            FROM engagement
+            WHERE post_id = :post_id
+            GROUP BY tipo
+        """)
+        with self._db.get_session() as session:
+            result = session.execute(sql, {"post_id": post_id})
+            rows = result.fetchall()
+        return {row[0]: row[1] for row in rows}
 
     def get_ranking_dataframe(self) -> pd.DataFrame:
         """Ranking de usuários por pontos (reaction=1, comentario=2, share=2)."""

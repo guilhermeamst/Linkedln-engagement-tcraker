@@ -92,6 +92,10 @@ class EngagementService:
 
         self._post_repo.salvar(post)
 
+        # Remove o dono da página — não deve entrar no ranking
+        _USUARIOS_BLOQUEADOS = {"armco do brasil s.a.", "armco do brasil s.a", "armco do brasil"}
+        engagements = [e for e in engagements if e.usuario.strip().lower() not in _USUARIOS_BLOQUEADOS]
+
         if not engagements:
             return {"inseridos": 0, "duplicatas": 0}
 
@@ -191,3 +195,7 @@ class EngagementService:
 
     def get_engajamento_por_post_dataframe(self) -> pd.DataFrame:
         return self._engagement_repo.get_engajamento_por_post_dataframe()
+
+    def contar_interacoes_por_tipo(self, post_id: str) -> Dict[str, int]:
+        """Contagem real de interações salvas no banco para um post, por tipo."""
+        return self._engagement_repo.contar_por_post_e_tipo(post_id)

@@ -168,19 +168,20 @@ class ETLPipeline:
 
     def _verificar_skip(self, post_id: str, total_r: int, total_c: int, total_s: int) -> bool:
         """
-        Retorna True (pular) se o post já está no banco E os totais de interações
-        exibidos no card coincidem com os armazenados.
-        Retorna False (processar) se o post é novo ou se algum total mudou.
+        Retorna True (pular) se o post já está no banco E o número de interações
+        reais salvas na tabela engagement coincide com os totais do LinkedIn.
+        Retorna False (processar) se o post é novo ou se algum total divergiu.
         """
         post_db = self._post_repo.buscar_por_id(post_id)
         if post_db is None:
             return False  # post novo — deve processar
-        totais_iguais = (
-            post_db.total_likes       == total_r and
-            post_db.total_comentarios == total_c and
-            post_db.total_shares      == total_s
-        )
-        return totais_iguais
+
+        contagens = self._engagement_service.contar_interacoes_por_tipo(post_id)
+        reactions_db   = contagens.get("reaction", 0)
+        comentarios_db = contagens.get("comentario", 0)
+        shares_db      = contagens.get("share", 0)
+
+        return reactions_db == total_r and comentarios_db == total_c and shares_db == total_s
 
     def _log_resumo(self, result: PipelineResult) -> None:
         logger.info("=" * 60)

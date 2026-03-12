@@ -68,7 +68,7 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         background-clip: text;
         display: inline-block;
-        font-size: 2.2rem;
+        font-size: 3.5rem;
         font-weight: 800;
         margin-bottom: 0;
         padding: 0.3rem 0.1rem;
@@ -93,6 +93,17 @@ st.markdown("""
     .top-nome   { color: #ccd6f6; font-size: 1.1rem; font-weight: 700; margin: 0.5rem 0 0.2rem; }
     .top-pontos { color: #64ffda; font-size: 1.8rem; font-weight: 800; }
     .top-detalhe { color: #8892b0; font-size: 0.8rem; margin-top: 0.3rem; }
+    .top-perfil-link {
+        display: inline-block;
+        margin-top: 0.8rem;
+        color: #00b4d8;
+        font-size: 0.85rem;
+        text-decoration: none;
+        border: 1px solid #00b4d8;
+        border-radius: 6px;
+        padding: 0.2rem 0.7rem;
+    }
+    .top-perfil-link:hover { background-color: #00b4d8; color: #0f1116; }
 
     hr { border-color: #2d3250; margin: 2rem 0; }
     section[data-testid="stSidebar"] { background-color: #13151f; }
@@ -187,7 +198,12 @@ def _render_sidebar() -> None:
         st.markdown("---")
         if st.button("🔄 Atualizar Dados", use_container_width=True):
             st.cache_data.clear()
+            st.cache_resource.clear()
+            st.session_state["_dados_atualizados"] = True
             st.rerun()
+
+        if st.session_state.pop("_dados_atualizados", False):
+            st.success("✅ Dados atualizados com sucesso!")
 
         st.markdown("---")
         st.caption("Dados desde 06/01/2026")
@@ -198,7 +214,13 @@ def _render_sidebar() -> None:
 # --------------------------------------------------------------------------- #
 
 def _render_header() -> None:
-    st.markdown('<p class="titulo-principal">LinkedIn Engagement Tracker</p>', unsafe_allow_html=True)
+    st.markdown(
+        '<h1 style="background: linear-gradient(90deg, #0077b6, #00b4d8, #48cae4);'
+        ' -webkit-background-clip: text; -webkit-text-fill-color: transparent;'
+        ' background-clip: text; font-size: 3.5rem; font-weight: 800; margin-bottom: 0; line-height: 1.3;">'
+        'LinkedIn Engagement Tracker</h1>',
+        unsafe_allow_html=True,
+    )
     st.markdown('<p class="subtitulo">Ranking de engajamento da página corporativa — 2026</p>', unsafe_allow_html=True)
     st.markdown("---")
 
@@ -237,11 +259,7 @@ def _render_top3(ranking) -> None:
     top3     = ranking[:3]
     medalhas = [("🥇", "top-card-gold"), ("🥈", "top-card-silver"), ("🥉", "top-card-bronze")]
 
-    # Layout visual: 2° — 1° — 3°
-    if len(top3) == 3:
-        ordem = [1, 0, 2]
-    else:
-        ordem = list(range(len(top3)))
+    ordem = list(range(len(top3)))
 
     colunas = st.columns(len(top3))
     for col_idx, rank_idx in enumerate(ordem[:len(top3)]):
@@ -304,14 +322,14 @@ def _render_graficos(df_tipos: pd.DataFrame, ranking) -> None:
                 plot_bgcolor="rgba(0,0,0,0)",
                 font_color="#ccd6f6",
                 legend=dict(orientation="h", yanchor="bottom", y=-0.2),
-                margin=dict(t=20, b=20, l=20, r=20),
+                margin=dict(t=80, b=80, l=20, r=20),
             )
             fig.update_traces(
                 textinfo="percent+label",
                 textfont_size=13,
                 hovertemplate="<b>%{label}</b><br>Quantidade: %{value}<br>Participação: %{percent}<extra></extra>",
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, height=500)
         else:
             st.info("Sem dados para o gráfico de tipos.")
 
@@ -437,9 +455,49 @@ def _render_engajamento_por_post(df_posts: pd.DataFrame) -> None:
 
     df = df_posts.copy()
 
+    # Converter data e ordenar do mais antigo ao mais recente
+    if "data_post" in df.columns:
+        df["data_post"] = pd.to_datetime(df["data_post"])
+        df = df.sort_values("data_post", ascending=True).reset_index(drop=True)
+
+        # Filtro por data
+        datas_validas = df["data_post"].dropna()
+        if not datas_validas.empty:
+            data_min = datas_validas.min().date()
+            data_max = datas_validas.max().date()
+
+            if st.session_state.pop("_reset_filtro_data", False):
+                st.session_state["post_data_de"] = data_min
+                st.session_state["post_data_ate"] = data_max
+
+            if "post_data_de" not in st.session_state:
+                st.session_state["post_data_de"] = data_min
+            if "post_data_ate" not in st.session_state:
+                st.session_state["post_data_ate"] = data_max
+
+            col_f1, col_f2, col_f3 = st.columns([2, 2, 1])
+            with col_f1:
+                filtro_inicio = st.date_input("De", min_value=data_min, max_value=data_max, key="post_data_de")
+            with col_f2:
+                filtro_fim = st.date_input("Até", min_value=data_min, max_value=data_max, key="post_data_ate")
+            with col_f3:
+                st.markdown("<div style='margin-top:1.75rem'>", unsafe_allow_html=True)
+                if st.button("↺ Resetar", use_container_width=True, key="btn_reset_data"):
+                    st.session_state["_reset_filtro_data"] = True
+                    st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
+
+            df = df[
+                (df["data_post"].dt.date >= filtro_inicio) &
+                (df["data_post"].dt.date <= filtro_fim)
+            ]
+
     if "url_post" in df.columns:
         df["Link"] = df["url_post"].where(df["url_post"].notna(), other=None)
         df = df.drop(columns=["url_post"])
+
+    if "data_post" in df.columns:
+        df["data_post"] = df["data_post"].dt.date
 
     df = df.rename(columns={
         "post_id":          "Post ID",
@@ -450,6 +508,14 @@ def _render_engajamento_por_post(df_posts: pd.DataFrame) -> None:
         "total_interacoes": "Total",
         "pontos":           "⭐ Pontos",
     })
+
+    # Reordenar colunas: Link antes de Post ID
+    cols = list(df.columns)
+    if "Link" in cols and "Post ID" in cols:
+        cols.remove("Link")
+        idx_id = cols.index("Post ID")
+        cols.insert(idx_id, "Link")
+        df = df[cols]
 
     st.dataframe(
         df,
