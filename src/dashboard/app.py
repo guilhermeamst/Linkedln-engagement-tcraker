@@ -35,77 +35,84 @@ st.set_page_config(
     page_title="LinkedIn Engagement Tracker",
     page_icon="💼",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 st.markdown("""
 <style>
+    /* ── Base ────────────────────────────────────────────────────────── */
     .main { background-color: #0f1116; }
-    .block-container { padding: 6rem 3rem 2rem 3rem; }
+    .block-container {
+        padding: 4rem 2rem 2rem 2rem;
+        max-width: 100%;
+    }
 
+    /* ── KPI Metrics ─────────────────────────────────────────────────── */
     div[data-testid="metric-container"] {
         background: linear-gradient(135deg, #1e2130 0%, #252a3d 100%);
         border: 1px solid #3d4466;
         border-radius: 12px;
-        padding: 1rem 1.5rem;
+        padding: 1rem 1.25rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        min-height: 80px;
     }
     div[data-testid="metric-container"] label {
         color: #8892b0 !important;
-        font-size: 0.85rem !important;
+        font-size: 0.78rem !important;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        line-height: 1.2;
     }
     div[data-testid="metric-container"] [data-testid="stMetricValue"] {
         color: #ccd6f6 !important;
-        font-size: 2rem !important;
+        font-size: 1.75rem !important;
         font-weight: 700 !important;
     }
 
-    .titulo-principal {
+    /* ── Título principal ────────────────────────────────────────────── */
+    .main-title {
         background: linear-gradient(90deg, #0077b6, #00b4d8, #48cae4);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        display: inline-block;
-        font-size: 3.5rem;
+        display: block;
+        font-size: 2.8rem;
         font-weight: 800;
         margin-bottom: 0;
         padding: 0.3rem 0.1rem;
-        line-height: 1.4;
+        line-height: 1.2;
     }
-    .subtitulo { color: #8892b0; font-size: 1rem; margin-top: 0.3rem; }
+    .subtitulo { color: #8892b0; font-size: 0.95rem; margin-top: 0.3rem; }
 
+    /* ── Top 3 cards ─────────────────────────────────────────────────── */
     .top-card {
         background: linear-gradient(135deg, #1a1f35 0%, #252d4a 100%);
         border-radius: 16px;
-        padding: 1.5rem;
+        padding: 1.5rem 1rem;
         text-align: center;
         border: 1px solid #3d4466;
         box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-        margin: 0.5rem;
+        margin: 0.4rem;
+        height: 100%;
+        box-sizing: border-box;
     }
     .top-card-gold   { border-color: #ffd700; box-shadow: 0 8px 24px rgba(255,215,0,0.2); }
     .top-card-silver { border-color: #c0c0c0; box-shadow: 0 8px 24px rgba(192,192,192,0.2); }
     .top-card-bronze { border-color: #cd7f32; box-shadow: 0 8px 24px rgba(205,127,50,0.2); }
 
-    .medal      { font-size: 2.5rem; }
-    .top-nome   { color: #ccd6f6; font-size: 1.1rem; font-weight: 700; margin: 0.5rem 0 0.2rem; }
-    .top-pontos { color: #64ffda; font-size: 1.8rem; font-weight: 800; }
-    .top-detalhe { color: #8892b0; font-size: 0.8rem; margin-top: 0.3rem; }
-    .top-perfil-link {
-        display: inline-block;
-        margin-top: 0.8rem;
-        color: #00b4d8;
-        font-size: 0.85rem;
-        text-decoration: none;
-        border: 1px solid #00b4d8;
-        border-radius: 6px;
-        padding: 0.2rem 0.7rem;
-    }
-    .top-perfil-link:hover { background-color: #00b4d8; color: #0f1116; }
+    .medal       { font-size: 2.5rem; }
+    .top-nome    { color: #ccd6f6; font-size: 1rem; font-weight: 700; margin: 0.4rem 0 0.2rem; word-break: break-word; }
+    .top-pontos  { color: #64ffda; font-size: 1.7rem; font-weight: 800; }
+    .top-detalhe { color: #8892b0; font-size: 0.78rem; margin-top: 0.3rem; }
 
-    hr { border-color: #2d3250; margin: 2rem 0; }
+    /* ── Botões ──────────────────────────────────────────────────────── */
+    button[kind="secondary"], button[kind="primary"] {
+        min-height: 44px !important;
+        font-size: 0.9rem !important;
+    }
+
+    /* ── Misc ────────────────────────────────────────────────────────── */
+    hr { border-color: #2d3250; margin: 1.5rem 0; }
     section[data-testid="stSidebar"] { background-color: #13151f; }
     section[data-testid="stSidebar"] *:not(button):not(button *) { color: #ccd6f6; }
     section[data-testid="stSidebar"] button {
@@ -113,10 +120,107 @@ st.markdown("""
         color: #ffffff !important;
         border: none;
         border-radius: 8px;
+        min-height: 44px !important;
     }
     section[data-testid="stSidebar"] button:hover {
         background-color: #00b4d8;
         color: #ffffff !important;
+    }
+    /* Sidebar: tabela com scroll */
+    section[data-testid="stSidebar"] table {
+        font-size: 0.82rem;
+        width: 100%;
+        overflow-x: auto;
+        display: block;
+    }
+
+    /* Dataframes com scroll horizontal */
+    [data-testid="stDataFrame"] > div { overflow-x: auto !important; }
+
+    /* ── Colunas: flex wrap ──────────────────────────────────────────── */
+    [data-testid="stHorizontalBlock"],
+    [data-testid="stColumns"] {
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    /* ── Responsividade: Tablet (≤ 900 px) ──────────────────────────── */
+    @media screen and (max-width: 900px) {
+        .block-container { padding: 3rem 1rem 1.5rem 1rem !important; }
+        .main-title { font-size: 2.2rem !important; }
+
+        /* KPIs: 3 ou 4 por linha */
+        [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+        [data-testid="stColumn"] {
+            flex: 1 1 calc(33% - 0.5rem) !important;
+            min-width: calc(33% - 0.5rem) !important;
+        }
+
+        div[data-testid="metric-container"] { padding: 0.75rem 0.9rem !important; }
+        div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+            font-size: 1.4rem !important;
+        }
+    }
+
+    /* ── Responsividade: Mobile (≤ 640 px) ──────────────────────────── */
+    @media screen and (max-width: 640px) {
+        .block-container { padding: 2rem 0.5rem 1rem 0.5rem !important; }
+
+        .main-title  { font-size: 1.75rem !important; }
+        .subtitulo   { font-size: 0.82rem !important; }
+
+        /* KPIs: 2 por linha */
+        [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+        [data-testid="stColumn"] {
+            flex: 1 1 calc(50% - 0.4rem) !important;
+            min-width: calc(50% - 0.4rem) !important;
+            width: calc(50% - 0.4rem) !important;
+        }
+
+        div[data-testid="metric-container"] {
+            padding: 0.6rem 0.75rem !important;
+            min-height: 70px !important;
+        }
+        div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+            font-size: 1.2rem !important;
+        }
+        div[data-testid="metric-container"] label {
+            font-size: 0.65rem !important;
+        }
+
+        /* Top 3 cards: largura total em coluna única */
+        .top-card   { padding: 1rem 0.75rem !important; margin: 0.2rem 0 !important; }
+        .medal      { font-size: 2rem !important; }
+        .top-nome   { font-size: 0.9rem !important; }
+        .top-pontos { font-size: 1.4rem !important; }
+        .top-detalhe { font-size: 0.7rem !important; }
+
+        /* Gráficos: 1 por linha */
+        [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:has(.js-plotly-plot),
+        [data-testid="stColumn"]:has(.js-plotly-plot) {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+        }
+    }
+
+    /* ── Responsividade: Mobile pequeno (≤ 420 px) ───────────────────── */
+    @media screen and (max-width: 420px) {
+        .block-container { padding: 1.5rem 0.25rem 0.75rem 0.25rem !important; }
+        .main-title { font-size: 1.4rem !important; }
+
+        /* KPIs: coluna única */
+        [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+        [data-testid="stColumn"] {
+            flex: 1 1 100% !important;
+            min-width: 100% !important;
+            width: 100% !important;
+        }
+
+        div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+            font-size: 1.1rem !important;
+        }
+
+        .top-pontos { font-size: 1.2rem !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -214,13 +318,12 @@ def _render_sidebar() -> None:
 # --------------------------------------------------------------------------- #
 
 def _render_header() -> None:
+    # Garante viewport correto em celulares
     st.markdown(
-        '<h1 style="background: linear-gradient(90deg, #0077b6, #00b4d8, #48cae4);'
-        ' -webkit-background-clip: text; -webkit-text-fill-color: transparent;'
-        ' background-clip: text; font-size: 3.5rem; font-weight: 800; margin-bottom: 0; line-height: 1.3;">'
-        'LinkedIn Engagement Tracker</h1>',
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">',
         unsafe_allow_html=True,
     )
+    st.markdown('<h1 class="main-title">LinkedIn Engagement Tracker</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitulo">Ranking de engajamento da página corporativa — 2026</p>', unsafe_allow_html=True)
     st.markdown("---")
 
@@ -230,17 +333,22 @@ def _render_header() -> None:
 # --------------------------------------------------------------------------- #
 
 def _render_kpis(kpis: dict) -> None:
-    cols = st.columns(7)
     items = [
-        ("💬 Interações",   kpis["total_interacoes"]),
-        ("⭐ Pontos Totais", kpis["pontos_totais"]),
-        ("📄 Posts",         kpis["total_posts"]),
-        ("👤 Usuários",      kpis["total_usuarios"]),
-        ("👍 Reações",     kpis["total_reactions"]),
-        ("💬 Comentários",   kpis["total_comentarios"]),
-        ("🔄 Compartilhamentos",        kpis["total_shares"]),
+        ("💬 Interações",          kpis["total_interacoes"]),
+        ("⭐ Pontos Totais",        kpis["pontos_totais"]),
+        ("📄 Posts",               kpis["total_posts"]),
+        ("👤 Usuários",            kpis["total_usuarios"]),
+        ("👍 Reações",             kpis["total_reactions"]),
+        ("💬 Comentários",         kpis["total_comentarios"]),
+        ("🔄 Compartilhamentos",   kpis["total_shares"]),
     ]
-    for col, (label, value) in zip(cols, items):
+    # 4 + 3 em duas linhas: melhor wrapping em telas menores
+    row1 = st.columns(4)
+    row2 = st.columns(3)
+    for col, (label, value) in zip(row1, items[:4]):
+        with col:
+            st.metric(label=label, value=f"{value:,}".replace(",", "."))
+    for col, (label, value) in zip(row2, items[4:]):
         with col:
             st.metric(label=label, value=f"{value:,}".replace(",", "."))
 
@@ -259,28 +367,24 @@ def _render_top3(ranking) -> None:
     top3     = ranking[:3]
     medalhas = [("🥇", "top-card-gold"), ("🥈", "top-card-silver"), ("🥉", "top-card-bronze")]
 
-    ordem = list(range(len(top3)))
-
-    colunas = st.columns(len(top3))
-    for col_idx, rank_idx in enumerate(ordem[:len(top3)]):
+    # Gera HTML de todos os cards de uma vez para melhor controle mobile
+    cards_html = '<div style="display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center;">'
+    for rank_idx in range(len(top3)):
         u = top3[rank_idx]
         medalha, classe = medalhas[rank_idx]
-        with colunas[col_idx]:
-            st.markdown(
-                f"""
-                <div class="top-card {classe}">
-                    <div class="medal">{medalha}</div>
-                    <div class="top-nome">{u.usuario}</div>
-                    <div class="top-pontos">{u.pontos} pts</div>
-                    <div class="top-detalhe">
-                        👍 {u.reactions} &nbsp;|&nbsp;
-                        💬 {u.comentarios} &nbsp;|&nbsp;
-                        🔄 {u.shares}
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+        cards_html += f"""
+        <div class="top-card {classe}" style="flex:1 1 200px; max-width:320px;">
+            <div class="medal">{medalha}</div>
+            <div class="top-nome">{u.usuario}</div>
+            <div class="top-pontos">{u.pontos} pts</div>
+            <div class="top-detalhe">
+                👍 {u.reactions} &nbsp;|&nbsp;
+                💬 {u.comentarios} &nbsp;|&nbsp;
+                🔄 {u.shares}
+            </div>
+        </div>"""
+    cards_html += "</div>"
+    st.markdown(cards_html, unsafe_allow_html=True)
 
 
 # --------------------------------------------------------------------------- #
@@ -301,7 +405,7 @@ _COLOR_TIPO = {
 
 
 def _render_graficos(df_tipos: pd.DataFrame, ranking) -> None:
-    col1, col2 = st.columns(2)
+    col1, col2 = st.columns([1, 1])
 
     # Pizza — distribuição por tipo
     with col1:
@@ -475,14 +579,14 @@ def _render_engajamento_por_post(df_posts: pd.DataFrame) -> None:
             if "post_data_ate" not in st.session_state:
                 st.session_state["post_data_ate"] = data_max
 
-            col_f1, col_f2, col_f3 = st.columns([2, 2, 1])
+            col_f1, col_f2, col_f3 = st.columns([5, 5, 2])
             with col_f1:
-                filtro_inicio = st.date_input("De", min_value=data_min, max_value=data_max, key="post_data_de")
+                filtro_inicio = st.date_input("📅 De", min_value=data_min, max_value=data_max, key="post_data_de")
             with col_f2:
-                filtro_fim = st.date_input("Até", min_value=data_min, max_value=data_max, key="post_data_ate")
+                filtro_fim = st.date_input("📅 Até", min_value=data_min, max_value=data_max, key="post_data_ate")
             with col_f3:
                 st.markdown("<div style='margin-top:1.75rem'>", unsafe_allow_html=True)
-                if st.button("↺ Resetar", use_container_width=True, key="btn_reset_data"):
+                if st.button("↺", use_container_width=True, key="btn_reset_data", help="Resetar filtro de datas"):
                     st.session_state["_reset_filtro_data"] = True
                     st.rerun()
                 st.markdown("</div>", unsafe_allow_html=True)
