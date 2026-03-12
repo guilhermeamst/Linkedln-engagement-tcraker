@@ -141,8 +141,6 @@ source .venv/bin/activate
 # 3. Instale as dependências Python
 pip install -r requirements.txt
 
-# 4. Instale o browser Chromium do Playwright
-playwright install chromium
 ```
 
 ---
