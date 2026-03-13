@@ -373,7 +373,7 @@ def _render_sidebar() -> None:
             st.toast("Dados atualizados com sucesso!", icon="✅")
 
         st.markdown("---")
-        st.caption("Dados desde 06/01/2026")
+        st.caption("Dados desde 01/03/2026")
 
 
 # --------------------------------------------------------------------------- #
@@ -799,7 +799,7 @@ def main() -> None:
     _render_engajamento_por_post(dados["df_posts"])
 
     st.markdown("---")
-    st.caption("LinkedIn Engagement Tracker | Dados desde 06/01/2026 | Uso interno")
+    st.caption("LinkedIn Engagement Tracker | Dados desde 01/03/2026 | Uso interno")
 
 
 if __name__ == "__main__":
