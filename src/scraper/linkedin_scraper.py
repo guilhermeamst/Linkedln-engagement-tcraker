@@ -439,7 +439,6 @@ class LinkedInScraper:
         urns_processados: set = set()
         total_processados  = 0
         scroll_sem_novos   = 0
-        posts_fora_periodo = 0
 
         while total_processados < self._scraper_cfg.max_posts:
 
@@ -489,20 +488,21 @@ class LinkedInScraper:
 
             data_post = self._extrair_data_do_card(proximo_card)
 
-            if data_post and data_post < self._scraper_cfg.data_inicio:
-                posts_fora_periodo += 1
+            if data_post and data_post > self._scraper_cfg.data_fim:
                 logger.info(
-                    "Post %s em %s — anterior a %s (%d/3).",
-                    post_id, data_post, self._scraper_cfg.data_inicio, posts_fora_periodo,
+                    "Post %s em %s — posterior a %s. Pulando.",
+                    post_id, data_post, self._scraper_cfg.data_fim,
                 )
-                if posts_fora_periodo >= 3:
-                    logger.info("3 posts fora do período. Encerrando.")
-                    break
                 total_processados += 1
                 continue
-            else:
-                if data_post is not None:
-                    posts_fora_periodo = 0
+
+            if data_post and data_post < self._scraper_cfg.data_inicio:
+                logger.info(
+                    "Post %s em %s — anterior a %s. Pulando.",
+                    post_id, data_post, self._scraper_cfg.data_inicio,
+                )
+                total_processados += 1
+                continue
 
             # Lê totais exibidos no card (mais precisos que contar nomes coletados,
             # pois alguns perfis privados não aparecem no modal)

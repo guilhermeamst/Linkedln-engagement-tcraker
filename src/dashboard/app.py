@@ -7,6 +7,8 @@ Executar com: streamlit run src/dashboard/app.py
 from __future__ import annotations
 
 import sys
+import time
+from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -69,7 +71,6 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         border-color: var(--accent);
     }
-    /* barra de acento no topo */
     .kpi-card::before {
         content: "";
         position: absolute;
@@ -78,7 +79,6 @@ st.markdown("""
         background: var(--accent);
         border-radius: 16px 16px 0 0;
     }
-    /* círculo decorativo de fundo */
     .kpi-card::after {
         content: "";
         position: absolute;
@@ -89,57 +89,27 @@ st.markdown("""
         opacity: 0.07;
         pointer-events: none;
     }
-    .kpi-icon {
-        font-size: 1.4rem;
-        line-height: 1;
-        margin-bottom: 0.65rem;
-        display: block;
-    }
+    .kpi-icon { font-size: 1.4rem; line-height: 1; margin-bottom: 0.65rem; display: block; }
     .kpi-value {
-        font-size: 2rem;
-        font-weight: 800;
+        font-size: 2rem; font-weight: 800;
         color: #e8eaf6;
-        line-height: 1;
-        margin-bottom: 0.35rem;
-        letter-spacing: -0.02em;
+        line-height: 1; margin-bottom: 0.35rem; letter-spacing: -0.02em;
     }
     .kpi-label {
-        font-size: 0.7rem;
-        font-weight: 600;
+        font-size: 0.7rem; font-weight: 600;
         color: #5a6685;
-        text-transform: uppercase;
-        letter-spacing: 0.09em;
+        text-transform: uppercase; letter-spacing: 0.09em;
     }
     .kpi-section-title {
-        font-size: 0.68rem;
-        font-weight: 700;
+        font-size: 0.68rem; font-weight: 700;
         color: #3d4b65;
-        text-transform: uppercase;
-        letter-spacing: 0.13em;
+        text-transform: uppercase; letter-spacing: 0.13em;
         margin: 1.2rem 0 0.55rem 0.1rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        display: flex; align-items: center; gap: 0.5rem;
     }
     .kpi-section-title::after {
-        content: "";
-        flex: 1;
-        height: 1px;
+        content: ""; flex: 1; height: 1px;
         background: linear-gradient(90deg, #2d3250 0%, transparent 100%);
-    }
-
-    @media screen and (max-width: 900px) {
-        .kpi-grid { grid-template-columns: repeat(3, 1fr) !important; }
-        .kpi-value { font-size: 1.6rem !important; }
-    }
-    @media screen and (max-width: 640px) {
-        .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.6rem !important; }
-        .kpi-card { padding: 1rem 1rem 0.85rem !important; }
-        .kpi-value { font-size: 1.4rem !important; }
-        .kpi-label { font-size: 0.65rem !important; }
-    }
-    @media screen and (max-width: 420px) {
-        .kpi-grid { grid-template-columns: 1fr !important; }
     }
 
     /* ── Título principal ────────────────────────────────────────────── */
@@ -148,26 +118,18 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
-        display: block;
-        font-size: 2.8rem;
-        font-weight: 800;
-        margin-bottom: 0;
-        padding: 0.3rem 0.1rem;
-        line-height: 1.2;
+        display: block; font-size: 2.8rem; font-weight: 800;
+        margin-bottom: 0; padding: 0.3rem 0.1rem; line-height: 1.2;
     }
     .subtitulo { color: #8892b0; font-size: 0.95rem; margin-top: 0.3rem; }
 
     /* ── Top 3 cards ─────────────────────────────────────────────────── */
     .top-card {
         background: linear-gradient(135deg, #1a1f35 0%, #252d4a 100%);
-        border-radius: 16px;
-        padding: 1.5rem 1rem;
-        text-align: center;
+        border-radius: 16px; padding: 1.5rem 1rem; text-align: center;
         border: 1px solid #3d4466;
         box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-        margin: 0.4rem;
-        height: 100%;
-        box-sizing: border-box;
+        margin: 0.4rem; height: 100%; box-sizing: border-box;
         transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
     .top-card:hover { transform: translateY(-4px); }
@@ -185,8 +147,7 @@ st.markdown("""
 
     /* ── Botões ──────────────────────────────────────────────────────── */
     button[kind="secondary"], button[kind="primary"] {
-        min-height: 44px !important;
-        font-size: 0.9rem !important;
+        min-height: 44px !important; font-size: 0.9rem !important;
     }
 
     /* ── Misc ────────────────────────────────────────────────────────── */
@@ -194,71 +155,53 @@ st.markdown("""
     section[data-testid="stSidebar"] { background-color: #13151f; }
     section[data-testid="stSidebar"] *:not(button):not(button *) { color: #ccd6f6; }
     section[data-testid="stSidebar"] button {
-        background-color: #0077b6;
-        color: #ffffff !important;
-        border: none;
-        border-radius: 8px;
-        min-height: 44px !important;
+        background-color: #0077b6; color: #ffffff !important;
+        border: none; border-radius: 8px; min-height: 44px !important;
     }
     section[data-testid="stSidebar"] button:hover {
-        background-color: #00b4d8;
-        color: #ffffff !important;
+        background-color: #00b4d8; color: #ffffff !important;
     }
-    /* Sidebar: tabela com scroll */
     section[data-testid="stSidebar"] table {
-        font-size: 0.82rem;
-        width: 100%;
-        overflow-x: auto;
-        display: block;
+        font-size: 0.82rem; width: 100%; overflow-x: auto; display: block;
     }
-
-    /* Dataframes com scroll horizontal */
     [data-testid="stDataFrame"] > div { overflow-x: auto !important; }
-
-    /* ── Colunas: flex wrap ──────────────────────────────────────────── */
     [data-testid="stHorizontalBlock"],
-    [data-testid="stColumns"] {
-        flex-wrap: wrap !important;
-        gap: 0.5rem !important;
-    }
+    [data-testid="stColumns"] { flex-wrap: wrap !important; gap: 0.5rem !important; }
 
-    /* ── Responsividade: Tablet (≤ 900 px) ──────────────────────────── */
+    /* ── Responsividade ──────────────────────────────────────────────── */
     @media screen and (max-width: 900px) {
         .block-container { padding: 3rem 1rem 1.5rem 1rem !important; }
         .main-title { font-size: 2.2rem !important; }
-
+        .kpi-grid { grid-template-columns: repeat(3, 1fr) !important; }
+        .kpi-value { font-size: 1.6rem !important; }
         [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
         [data-testid="stColumn"] {
             flex: 1 1 calc(33% - 0.5rem) !important;
             min-width: calc(33% - 0.5rem) !important;
         }
     }
-
-    /* ── Responsividade: Mobile (≤ 640 px) ──────────────────────────── */
     @media screen and (max-width: 640px) {
         .block-container { padding: 2rem 0.5rem 1rem 0.5rem !important; }
         .main-title  { font-size: 1.75rem !important; }
         .subtitulo   { font-size: 0.82rem !important; }
-
-        /* Top 3 cards */
+        .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.6rem !important; }
+        .kpi-card { padding: 1rem 1rem 0.85rem !important; }
+        .kpi-value { font-size: 1.4rem !important; }
+        .kpi-label { font-size: 0.65rem !important; }
         .top-card   { padding: 1rem 0.75rem !important; margin: 0.2rem 0 !important; }
         .medal      { font-size: 2rem !important; }
         .top-nome   { font-size: 0.9rem !important; }
         .top-pontos { font-size: 1.4rem !important; }
         .top-detalhe { font-size: 0.7rem !important; }
-
-        /* Gráficos: 1 por linha */
         [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:has(.js-plotly-plot),
         [data-testid="stColumn"]:has(.js-plotly-plot) {
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
+            flex: 1 1 100% !important; min-width: 100% !important;
         }
     }
-
-    /* ── Responsividade: Mobile pequeno (≤ 420 px) ───────────────────── */
     @media screen and (max-width: 420px) {
         .block-container { padding: 1.5rem 0.25rem 0.75rem 0.25rem !important; }
         .main-title { font-size: 1.4rem !important; }
+        .kpi-grid { grid-template-columns: 1fr !important; }
         .top-pontos { font-size: 1.2rem !important; }
     }
 </style>
@@ -317,6 +260,21 @@ def _carregar_dados():
         return None, str(e)
 
 
+@st.cache_data(ttl=300, show_spinner=False)
+def _carregar_dados_filtrado(data_inicio: date, data_fim: date):
+    """Carrega dados filtrados por período (cache por combinação de datas)."""
+    analytics, erro = _init_analytics()
+    if erro or analytics is None:
+        return None, erro
+
+    try:
+        dados = analytics.obter_dados_filtrados(data_inicio, data_fim)
+        return dados, None
+    except Exception as e:
+        logger.error("Erro ao carregar dados filtrados: %s", e, exc_info=True)
+        return None, str(e)
+
+
 # --------------------------------------------------------------------------- #
 #  Sidebar
 # --------------------------------------------------------------------------- #
@@ -346,7 +304,7 @@ def _render_sidebar() -> None:
             st.rerun()
 
         if st.session_state.pop("_dados_atualizados", False):
-            st.success("✅ Dados atualizados com sucesso!")
+            st.toast("Dados atualizados com sucesso!", icon="✅")
 
         st.markdown("---")
         st.caption("Dados desde 06/01/2026")
@@ -356,14 +314,77 @@ def _render_sidebar() -> None:
 #  Cabeçalho
 # --------------------------------------------------------------------------- #
 
-def _render_header() -> None:
-    # Garante viewport correto em celulares
+def _render_header(data_min: date, data_max: date) -> tuple[date, date]:
+    """Renderiza o cabeçalho com título e filtro de data. Retorna (inicio, fim) aplicados."""
     st.markdown(
         '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">',
         unsafe_allow_html=True,
     )
-    st.markdown('<h1 class="main-title">LinkedIn Engagement Tracker</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="subtitulo">Ranking de engajamento da página corporativa — 2026</p>', unsafe_allow_html=True)
+
+    # Se reset foi solicitado no ciclo anterior, aplica ANTES de criar os widgets
+    if st.session_state.pop("_reset_filtro_pending", False):
+        st.session_state["filtro_inicio_widget"]   = data_min
+        st.session_state["filtro_fim_widget"]      = data_max
+        st.session_state["filtro_inicio_aplicado"] = data_min
+        st.session_state["filtro_fim_aplicado"]    = data_max
+
+    # Datas dos inputs (podem mudar sem aplicar)
+    if "filtro_inicio_widget" not in st.session_state:
+        st.session_state["filtro_inicio_widget"] = data_min
+    if "filtro_fim_widget" not in st.session_state:
+        st.session_state["filtro_fim_widget"] = data_max
+
+    # Datas efetivamente aplicadas (usadas para carregar dados)
+    if "filtro_inicio_aplicado" not in st.session_state:
+        st.session_state["filtro_inicio_aplicado"] = data_min
+    if "filtro_fim_aplicado" not in st.session_state:
+        st.session_state["filtro_fim_aplicado"] = data_max
+
+    col_titulo, col_filtro = st.columns([3, 2], vertical_alignment="center")
+
+    with col_titulo:
+        st.markdown('<h1 class="main-title">LinkedIn Engagement Tracker</h1>', unsafe_allow_html=True)
+        st.markdown('<p class="subtitulo">Ranking de engajamento da página corporativa — 2026</p>', unsafe_allow_html=True)
+
+    with col_filtro:
+        st.markdown(
+            '<p style="font-size:0.7rem; font-weight:700; color:#0077b6; '
+            'text-transform:uppercase; letter-spacing:0.1em; margin:0 0 0.4rem 0;">📅 Filtrar por Período</p>',
+            unsafe_allow_html=True,
+        )
+
+        col_de, col_ate = st.columns(2)
+        with col_de:
+            st.date_input("De", min_value=data_min, max_value=data_max, key="filtro_inicio_widget")
+        with col_ate:
+            st.date_input("Até", min_value=data_min, max_value=data_max, key="filtro_fim_widget")
+
+        col_aplicar, col_reset = st.columns(2)
+        with col_aplicar:
+            if st.button("✔ Aplicar", use_container_width=True, key="btn_aplicar_filtro", type="primary"):
+                inicio = st.session_state["filtro_inicio_widget"]
+                fim    = st.session_state["filtro_fim_widget"]
+                if inicio > fim:
+                    fim = inicio
+                st.session_state["filtro_inicio_aplicado"] = inicio
+                st.session_state["filtro_fim_aplicado"]    = fim
+                st.rerun()
+        with col_reset:
+            if st.button("↺ Resetar", use_container_width=True, key="btn_reset_filtro_global"):
+                st.session_state["_reset_filtro_pending"] = True
+                st.rerun()
+
+        inicio_ap = st.session_state["filtro_inicio_aplicado"]
+        fim_ap    = st.session_state["filtro_fim_aplicado"]
+        is_filtrado = (inicio_ap != data_min or fim_ap != data_max)
+        if is_filtrado:
+            st.markdown(
+                f'<p style="font-size:0.72rem; color:#00b4d8; margin:0.3rem 0 0 0;">'
+                f'🔵 {inicio_ap.strftime("%d/%m/%Y")} → {fim_ap.strftime("%d/%m/%Y")}</p>',
+                unsafe_allow_html=True,
+            )
+
+    return st.session_state["filtro_inicio_aplicado"], st.session_state["filtro_fim_aplicado"]
 
 
 # --------------------------------------------------------------------------- #
@@ -612,38 +633,6 @@ def _render_engajamento_por_post(df_posts: pd.DataFrame) -> None:
         df["data_post"] = pd.to_datetime(df["data_post"])
         df = df.sort_values("data_post", ascending=True).reset_index(drop=True)
 
-        # Filtro por data
-        datas_validas = df["data_post"].dropna()
-        if not datas_validas.empty:
-            data_min = datas_validas.min().date()
-            data_max = datas_validas.max().date()
-
-            if st.session_state.pop("_reset_filtro_data", False):
-                st.session_state["post_data_de"] = data_min
-                st.session_state["post_data_ate"] = data_max
-
-            if "post_data_de" not in st.session_state:
-                st.session_state["post_data_de"] = data_min
-            if "post_data_ate" not in st.session_state:
-                st.session_state["post_data_ate"] = data_max
-
-            col_f1, col_f2, col_f3 = st.columns([5, 5, 2])
-            with col_f1:
-                filtro_inicio = st.date_input("📅 De", min_value=data_min, max_value=data_max, key="post_data_de")
-            with col_f2:
-                filtro_fim = st.date_input("📅 Até", min_value=data_min, max_value=data_max, key="post_data_ate")
-            with col_f3:
-                st.markdown("<div style='margin-top:1.75rem'>", unsafe_allow_html=True)
-                if st.button("↺", use_container_width=True, key="btn_reset_data", help="Resetar filtro de datas"):
-                    st.session_state["_reset_filtro_data"] = True
-                    st.rerun()
-                st.markdown("</div>", unsafe_allow_html=True)
-
-            df = df[
-                (df["data_post"].dt.date >= filtro_inicio) &
-                (df["data_post"].dt.date <= filtro_fim)
-            ]
-
     if "url_post" in df.columns:
         df["Link"] = df["url_post"].where(df["url_post"].notna(), other=None)
         df = df.drop(columns=["url_post"])
@@ -684,10 +673,11 @@ def _render_engajamento_por_post(df_posts: pd.DataFrame) -> None:
 def main() -> None:
     _render_sidebar()
 
+    # Carrega dados completos (para obter min/max de datas e cache)
     with st.spinner("Carregando dados..."):
-        dados, erro = _carregar_dados()
+        dados_completos, erro = _carregar_dados()
 
-    if erro or dados is None:
+    if erro or dados_completos is None:
         st.error(f"Erro ao carregar dados: {erro}")
         st.info(
             "Verifique se:\n"
@@ -697,10 +687,32 @@ def main() -> None:
         )
         return
 
+    # Determina o intervalo de datas disponível
+    df_posts_full = dados_completos["df_posts"]
+    if not df_posts_full.empty and "data_post" in df_posts_full.columns:
+        datas_validas = pd.to_datetime(df_posts_full["data_post"]).dropna()
+        data_min_global = datas_validas.min().date()
+        data_max_global = datas_validas.max().date()
+    else:
+        data_min_global = date(2026, 1, 6)
+        data_max_global = date.today()
+
+    # Renderiza cabeçalho com filtro de data
+    data_inicio, data_fim = _render_header(data_min_global, data_max_global)
+
+    # Usa dados filtrados se o período for diferente do intervalo completo
+    is_filtrado = (data_inicio != data_min_global or data_fim != data_max_global)
+    if is_filtrado:
+        with st.spinner("Aplicando filtro..."):
+            dados, erro_f = _carregar_dados_filtrado(data_inicio, data_fim)
+        if erro_f or dados is None:
+            st.warning("Erro ao filtrar dados — exibindo período completo.")
+            dados = dados_completos
+    else:
+        dados = dados_completos
+
     kpis    = dados["kpis"]
     ranking = dados["ranking"]
-
-    _render_header()
 
     _render_kpis(kpis)
     st.markdown("---")

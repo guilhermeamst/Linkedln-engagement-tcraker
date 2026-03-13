@@ -7,6 +7,7 @@ encapsulando toda a lógica de apresentação de métricas.
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Dict, List
 
 import pandas as pd
@@ -76,6 +77,46 @@ class AnalyticsService:
                  shares, total_interacoes, pontos.
         """
         return self._eng.get_engajamento_por_post_dataframe()
+
+    def obter_dados_filtrados(self, inicio: date, fim: date) -> Dict:
+        """Retorna todos os dados do dashboard filtrados pelo período informado."""
+        raw = self._eng.get_dados_filtrados_por_periodo(inicio, fim)
+
+        df_tipos  = raw["df_tipos"]
+        df_posts  = raw["df_posts"]
+        ranking   = self._rank.calcular_ranking_from_df_agregado(raw["df_ranking"])
+
+        reactions = comentarios = shares = 0
+        if not df_tipos.empty:
+            for _, row in df_tipos.iterrows():
+                if row["tipo"] == "reaction":   reactions   = int(row["quantidade"])
+                elif row["tipo"] == "comentario": comentarios = int(row["quantidade"])
+                elif row["tipo"] == "share":    shares      = int(row["quantidade"])
+
+        kpis = {
+            "total_interacoes":   reactions + comentarios + shares,
+            "total_posts":        len(df_posts),
+            "total_usuarios":     len(ranking),
+            "total_reactions":    reactions,
+            "total_comentarios":  comentarios,
+            "total_shares":       shares,
+            "pontos_totais":      reactions + comentarios * 2 + shares * 2,
+        }
+
+        niveis: Dict[str, int] = {}
+        for r in ranking:
+            niveis[r.nivel_engajamento] = niveis.get(r.nivel_engajamento, 0) + 1
+        ordem = ["Embaixador", "Entusiasta", "Colaborador", "Iniciante"]
+        rows_nv = [{"Nível": n, "Usuários": niveis.get(n, 0)} for n in ordem if n in niveis]
+
+        return {
+            "kpis":     kpis,
+            "ranking":  ranking,
+            "df_tipos": df_tipos,
+            "df_temp":  raw["df_temp"],
+            "df_posts": df_posts,
+            "niveis":   pd.DataFrame(rows_nv) if rows_nv else pd.DataFrame(columns=["Nível", "Usuários"]),
+        }
 
     def obter_resumo_por_nivel(self) -> pd.DataFrame:
         """

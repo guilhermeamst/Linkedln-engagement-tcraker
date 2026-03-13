@@ -199,3 +199,11 @@ class EngagementService:
     def contar_interacoes_por_tipo(self, post_id: str) -> Dict[str, int]:
         """Contagem real de interações salvas no banco para um post, por tipo."""
         return self._engagement_repo.contar_por_post_e_tipo(post_id)
+
+    def get_dados_filtrados_por_periodo(self, inicio: date, fim: date) -> Dict:
+        return {
+            "df_ranking": self._engagement_repo.get_ranking_dataframe_por_periodo(inicio, fim),
+            "df_tipos":   self._engagement_repo.get_engajamento_por_tipo_dataframe_por_periodo(inicio, fim),
+            "df_temp":    self._engagement_repo.get_evolucao_temporal_dataframe_por_periodo(inicio, fim),
+            "df_posts":   self._engagement_repo.get_engajamento_por_post_dataframe_por_periodo(inicio, fim),
+        }

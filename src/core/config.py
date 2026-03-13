@@ -46,6 +46,7 @@ class DatabaseConfig:
 class ScraperConfig:
     """Configurações de comportamento do scraper."""
     data_inicio: date
+    data_fim: date
     max_posts: int
     wait_timeout_ms: int
     retry_attempts: int
@@ -90,7 +91,8 @@ def load_config() -> AppConfig:
     database = DatabaseConfig(db_path=db_path)
 
     scraper = ScraperConfig(
-        data_inicio=date.fromisoformat(_get("SCRAPER_DATA_INICIO", "2026-01-01")),
+        data_inicio=date.fromisoformat(_get("SCRAPER_DATA_INICIO", "2026-03-01")),
+        data_fim=date.fromisoformat(_get("SCRAPER_DATA_FIM", "2026-03-31")),
         max_posts=int(_get("SCRAPER_MAX_POSTS", "500")),
         wait_timeout_ms=int(_get("SCRAPER_WAIT_TIMEOUT_MS", "30000")),
         retry_attempts=int(_get("SCRAPER_RETRY_ATTEMPTS", "3")),

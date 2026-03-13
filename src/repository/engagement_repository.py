@@ -254,3 +254,76 @@ class EngagementRepository(IEngagementRepository):
             rows = result.fetchall()
             columns = list(result.keys())
         return pd.DataFrame(rows, columns=columns)
+
+    # ------------------------------------------------------------------ #
+    #  Consultas filtradas por período
+    # ------------------------------------------------------------------ #
+
+    def get_ranking_dataframe_por_periodo(self, inicio: date, fim: date) -> pd.DataFrame:
+        sql = text("""
+            SELECT
+                usuario, usuario_id,
+                SUM(CASE WHEN tipo='reaction' THEN 1 WHEN tipo='comentario' THEN 2 WHEN tipo='share' THEN 2 ELSE 0 END) AS pontos,
+                SUM(CASE WHEN tipo='reaction'   THEN 1 ELSE 0 END) AS reactions,
+                SUM(CASE WHEN tipo='comentario' THEN 1 ELSE 0 END) AS comentarios,
+                SUM(CASE WHEN tipo='share'      THEN 1 ELSE 0 END) AS shares,
+                COUNT(*) AS total_interacoes
+            FROM engagement
+            WHERE data_interacao >= :inicio AND data_interacao <= :fim
+            GROUP BY usuario, usuario_id
+            ORDER BY pontos DESC
+        """)
+        with self._db.get_session() as session:
+            result = session.execute(sql, {"inicio": inicio, "fim": fim})
+            rows = result.fetchall()
+            columns = list(result.keys())
+        return pd.DataFrame(rows, columns=columns)
+
+    def get_engajamento_por_tipo_dataframe_por_periodo(self, inicio: date, fim: date) -> pd.DataFrame:
+        sql = text("""
+            SELECT tipo, COUNT(*) AS quantidade
+            FROM engagement
+            WHERE data_interacao >= :inicio AND data_interacao <= :fim
+            GROUP BY tipo
+            ORDER BY quantidade DESC
+        """)
+        with self._db.get_session() as session:
+            result = session.execute(sql, {"inicio": inicio, "fim": fim})
+            rows = result.fetchall()
+            columns = list(result.keys())
+        return pd.DataFrame(rows, columns=columns)
+
+    def get_evolucao_temporal_dataframe_por_periodo(self, inicio: date, fim: date) -> pd.DataFrame:
+        sql = text("""
+            SELECT data_interacao, tipo, COUNT(*) AS quantidade
+            FROM engagement
+            WHERE data_interacao IS NOT NULL AND data_interacao >= :inicio AND data_interacao <= :fim
+            GROUP BY data_interacao, tipo
+            ORDER BY data_interacao ASC
+        """)
+        with self._db.get_session() as session:
+            result = session.execute(sql, {"inicio": inicio, "fim": fim})
+            rows = result.fetchall()
+            columns = list(result.keys())
+        return pd.DataFrame(rows, columns=columns)
+
+    def get_engajamento_por_post_dataframe_por_periodo(self, inicio: date, fim: date) -> pd.DataFrame:
+        sql = text("""
+            SELECT
+                e.post_id, p.data_post, p.url_post,
+                SUM(CASE WHEN e.tipo='reaction'   THEN 1 ELSE 0 END) AS reactions,
+                SUM(CASE WHEN e.tipo='comentario' THEN 1 ELSE 0 END) AS comentarios,
+                SUM(CASE WHEN e.tipo='share'      THEN 1 ELSE 0 END) AS shares,
+                COUNT(*) AS total_interacoes,
+                SUM(CASE WHEN e.tipo='reaction' THEN 1 WHEN e.tipo='comentario' THEN 2 WHEN e.tipo='share' THEN 2 ELSE 0 END) AS pontos
+            FROM engagement e
+            LEFT JOIN posts p ON e.post_id = p.post_id
+            WHERE p.data_post >= :inicio AND p.data_post <= :fim
+            GROUP BY e.post_id
+            ORDER BY pontos DESC
+        """)
+        with self._db.get_session() as session:
+            result = session.execute(sql, {"inicio": inicio, "fim": fim})
+            rows = result.fetchall()
+            columns = list(result.keys())
+        return pd.DataFrame(rows, columns=columns)
