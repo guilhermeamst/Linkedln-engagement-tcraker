@@ -168,10 +168,15 @@ st.markdown("""
         margin: 0.4rem;
         height: 100%;
         box-sizing: border-box;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
+    .top-card:hover { transform: translateY(-4px); }
     .top-card-gold   { border-color: #ffd700; box-shadow: 0 8px 24px rgba(255,215,0,0.2); }
     .top-card-silver { border-color: #c0c0c0; box-shadow: 0 8px 24px rgba(192,192,192,0.2); }
     .top-card-bronze { border-color: #cd7f32; box-shadow: 0 8px 24px rgba(205,127,50,0.2); }
+    .top-card-gold:hover   { box-shadow: 0 14px 36px rgba(255,215,0,0.35); }
+    .top-card-silver:hover { box-shadow: 0 14px 36px rgba(192,192,192,0.35); }
+    .top-card-bronze:hover { box-shadow: 0 14px 36px rgba(205,127,50,0.35); }
 
     .medal       { font-size: 2.5rem; }
     .top-nome    { color: #ccd6f6; font-size: 1rem; font-weight: 700; margin: 0.4rem 0 0.2rem; word-break: break-word; }
