@@ -32,67 +32,51 @@ logger = get_logger(__name__)
 
 
 def _inject_calendario_pt() -> None:
-    """Injeta JS que traduz meses e dias do calendário Streamlit para português."""
+    """Traduz o calendário Streamlit para português.
+
+    - CSS puro para abreviações dos dias (100% confiável, sem JS).
+    - requestAnimationFrame para nomes dos meses (sobrevive a re-renders do React).
+    """
+    # ── Dias via CSS ::after ──────────────────────────────────────────────────
+    st.markdown("""
+<style>
+[data-baseweb="calendar"] abbr { font-size: 0 !important; }
+[data-baseweb="calendar"] abbr[title="Sunday"]::after    { content: "Dom"; font-size: 0.85rem; }
+[data-baseweb="calendar"] abbr[title="Monday"]::after    { content: "Seg"; font-size: 0.85rem; }
+[data-baseweb="calendar"] abbr[title="Tuesday"]::after   { content: "Ter"; font-size: 0.85rem; }
+[data-baseweb="calendar"] abbr[title="Wednesday"]::after { content: "Qua"; font-size: 0.85rem; }
+[data-baseweb="calendar"] abbr[title="Thursday"]::after  { content: "Qui"; font-size: 0.85rem; }
+[data-baseweb="calendar"] abbr[title="Friday"]::after    { content: "Sex"; font-size: 0.85rem; }
+[data-baseweb="calendar"] abbr[title="Saturday"]::after  { content: "S\00e1b"; font-size: 0.85rem; }
+</style>
+""", unsafe_allow_html=True)
+
+    # ── Meses via JS com rAF (combate re-renders do React) ───────────────────
     components.html("""
-    <script>
-    (function () {
-        const MESES = {
-            'January':'Janeiro','February':'Fevereiro','March':'Março',
-            'April':'Abril','May':'Maio','June':'Junho','July':'Julho',
-            'August':'Agosto','September':'Setembro','October':'Outubro',
-            'November':'Novembro','December':'Dezembro'
-        };
-        const DIAS_ABR  = {'Su':'Dom','Mo':'Seg','Tu':'Ter','We':'Qua','Th':'Qui','Fr':'Sex','Sa':'Sáb'};
-        const DIAS_FULL = {
-            'Sunday':'Domingo','Monday':'Segunda-feira','Tuesday':'Terça-feira',
-            'Wednesday':'Quarta-feira','Thursday':'Quinta-feira',
-            'Friday':'Sexta-feira','Saturday':'Sábado'
-        };
-
-        function traduzir() {
-            try {
-                const doc = window.parent.document;
-
-                // Opções do dropdown de mês (<select> ou [role="option"])
-                doc.querySelectorAll(
-                    '[data-baseweb="calendar"] select option, ' +
-                    '[data-baseweb="calendar"] [role="option"]'
-                ).forEach(el => {
-                    const t = el.textContent.trim();
-                    if (MESES[t]) el.textContent = MESES[t];
-                });
-
-                // Abreviações dos dias da semana no cabeçalho
-                doc.querySelectorAll('[data-baseweb="calendar"] abbr').forEach(el => {
-                    const t = el.textContent.trim();
-                    if (DIAS_ABR[t])  el.textContent = DIAS_ABR[t];
-                    if (DIAS_FULL[el.title]) el.title = DIAS_FULL[el.title];
-                });
-
-                // Botão de mês visível no header (ex.: "March ▾")
-                doc.querySelectorAll(
-                    '[data-baseweb="calendar"] [aria-live="polite"], ' +
-                    '[data-baseweb="calendar"] [data-testid="stDateInputCalendarHeader"] button, ' +
-                    '[data-baseweb="calendar"] button'
-                ).forEach(el => {
-                    if (el.childElementCount > 0) return;
-                    const t = el.textContent.trim();
-                    if (MESES[t]) el.textContent = MESES[t];
-                });
-
-            } catch (_) {}
-        }
-
-        try {
-            new MutationObserver(traduzir).observe(
-                window.parent.document.body,
-                { childList: true, subtree: true }
-            );
-            traduzir();
-        } catch (_) {}
-    })();
-    </script>
-    """, height=0)
+<script>
+(function(){
+    var M={
+        'January':'Janeiro','February':'Fevereiro','March':'Mar\u00e7o',
+        'April':'Abril','May':'Maio','June':'Junho','July':'Julho',
+        'August':'Agosto','September':'Setembro','October':'Outubro',
+        'November':'Novembro','December':'Dezembro'
+    };
+    function run(){
+        try{
+            var d=window.parent.document;
+            d.querySelectorAll('[data-baseweb="calendar"] select option')
+             .forEach(function(e){ if(M[e.text]) e.text=M[e.text]; });
+            d.querySelectorAll('[data-baseweb="calendar"] button')
+             .forEach(function(e){
+                 if(!e.children.length){ var t=e.textContent.trim(); if(M[t]) e.textContent=M[t]; }
+             });
+        }catch(x){}
+        requestAnimationFrame(run);
+    }
+    run();
+})();
+</script>
+""", height=1, scrolling=False)
 
 
 # --------------------------------------------------------------------------- #
