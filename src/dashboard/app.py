@@ -47,26 +47,81 @@ st.markdown("""
         max-width: 100%;
     }
 
-    /* ── KPI Metrics ─────────────────────────────────────────────────── */
-    div[data-testid="metric-container"] {
-        background: linear-gradient(135deg, #1e2130 0%, #252a3d 100%);
-        border: 1px solid #3d4466;
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        min-height: 80px;
+    /* ── KPI Grid ────────────────────────────────────────────────────── */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 0.85rem;
+        margin-bottom: 1.5rem;
     }
-    div[data-testid="metric-container"] label {
-        color: #8892b0 !important;
-        font-size: 0.78rem !important;
+    .kpi-card {
+        background: linear-gradient(145deg, #1a1f35 0%, #1e2438 100%);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 16px;
+        padding: 1.25rem 1.4rem 1.1rem;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    }
+    .kpi-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        border-color: var(--accent);
+    }
+    /* barra de acento no topo */
+    .kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: var(--accent);
+        border-radius: 16px 16px 0 0;
+    }
+    /* círculo decorativo de fundo */
+    .kpi-card::after {
+        content: "";
+        position: absolute;
+        bottom: -22px; right: -22px;
+        width: 88px; height: 88px;
+        background: var(--accent);
+        border-radius: 50%;
+        opacity: 0.07;
+        pointer-events: none;
+    }
+    .kpi-icon {
+        font-size: 1.4rem;
+        line-height: 1;
+        margin-bottom: 0.65rem;
+        display: block;
+    }
+    .kpi-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #e8eaf6;
+        line-height: 1;
+        margin-bottom: 0.35rem;
+        letter-spacing: -0.02em;
+    }
+    .kpi-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #5a6685;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        line-height: 1.2;
+        letter-spacing: 0.09em;
     }
-    div[data-testid="metric-container"] [data-testid="stMetricValue"] {
-        color: #ccd6f6 !important;
-        font-size: 1.75rem !important;
-        font-weight: 700 !important;
+    @media screen and (max-width: 900px) {
+        .kpi-grid { grid-template-columns: repeat(3, 1fr) !important; }
+        .kpi-value { font-size: 1.6rem !important; }
+    }
+    @media screen and (max-width: 640px) {
+        .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.6rem !important; }
+        .kpi-card { padding: 1rem 1rem 0.85rem !important; }
+        .kpi-value { font-size: 1.4rem !important; }
+        .kpi-label { font-size: 0.65rem !important; }
+    }
+    @media screen and (max-width: 420px) {
+        .kpi-grid { grid-template-columns: 1fr !important; }
     }
 
     /* ── Título principal ────────────────────────────────────────────── */
@@ -149,46 +204,20 @@ st.markdown("""
         .block-container { padding: 3rem 1rem 1.5rem 1rem !important; }
         .main-title { font-size: 2.2rem !important; }
 
-        /* KPIs: 3 ou 4 por linha */
         [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
         [data-testid="stColumn"] {
             flex: 1 1 calc(33% - 0.5rem) !important;
             min-width: calc(33% - 0.5rem) !important;
-        }
-
-        div[data-testid="metric-container"] { padding: 0.75rem 0.9rem !important; }
-        div[data-testid="metric-container"] [data-testid="stMetricValue"] {
-            font-size: 1.4rem !important;
         }
     }
 
     /* ── Responsividade: Mobile (≤ 640 px) ──────────────────────────── */
     @media screen and (max-width: 640px) {
         .block-container { padding: 2rem 0.5rem 1rem 0.5rem !important; }
-
         .main-title  { font-size: 1.75rem !important; }
         .subtitulo   { font-size: 0.82rem !important; }
 
-        /* KPIs: 2 por linha */
-        [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
-        [data-testid="stColumn"] {
-            flex: 1 1 calc(50% - 0.4rem) !important;
-            min-width: calc(50% - 0.4rem) !important;
-            width: calc(50% - 0.4rem) !important;
-        }
-
-        div[data-testid="metric-container"] {
-            padding: 0.6rem 0.75rem !important;
-            min-height: 70px !important;
-        }
-        div[data-testid="metric-container"] [data-testid="stMetricValue"] {
-            font-size: 1.2rem !important;
-        }
-        div[data-testid="metric-container"] label {
-            font-size: 0.65rem !important;
-        }
-
-        /* Top 3 cards: largura total em coluna única */
+        /* Top 3 cards */
         .top-card   { padding: 1rem 0.75rem !important; margin: 0.2rem 0 !important; }
         .medal      { font-size: 2rem !important; }
         .top-nome   { font-size: 0.9rem !important; }
@@ -207,19 +236,6 @@ st.markdown("""
     @media screen and (max-width: 420px) {
         .block-container { padding: 1.5rem 0.25rem 0.75rem 0.25rem !important; }
         .main-title { font-size: 1.4rem !important; }
-
-        /* KPIs: coluna única */
-        [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
-        [data-testid="stColumn"] {
-            flex: 1 1 100% !important;
-            min-width: 100% !important;
-            width: 100% !important;
-        }
-
-        div[data-testid="metric-container"] [data-testid="stMetricValue"] {
-            font-size: 1.1rem !important;
-        }
-
         .top-pontos { font-size: 1.2rem !important; }
     }
 </style>
@@ -334,23 +350,24 @@ def _render_header() -> None:
 
 def _render_kpis(kpis: dict) -> None:
     items = [
-        ("💬 Interações",          kpis["total_interacoes"]),
-        ("⭐ Pontos Totais",        kpis["pontos_totais"]),
-        ("📄 Posts",               kpis["total_posts"]),
-        ("👤 Usuários",            kpis["total_usuarios"]),
-        ("👍 Reações",             kpis["total_reactions"]),
-        ("💬 Comentários",         kpis["total_comentarios"]),
-        ("🔄 Compartilhamentos",   kpis["total_shares"]),
+        ("💬", "Interações",        kpis["total_interacoes"],  "#0077b6"),
+        ("⭐", "Pontos Totais",      kpis["pontos_totais"],     "#f4c430"),
+        ("📄", "Posts",             kpis["total_posts"],       "#00b4d8"),
+        ("👤", "Usuários",          kpis["total_usuarios"],    "#48cae4"),
+        ("👍", "Reações",           kpis["total_reactions"],   "#06d6a0"),
+        ("💬", "Comentários",       kpis["total_comentarios"], "#a855f7"),
+        ("🔄", "Compartilhamentos", kpis["total_shares"],      "#f97316"),
     ]
-    # 4 + 3 em duas linhas: melhor wrapping em telas menores
-    row1 = st.columns(4)
-    row2 = st.columns(3)
-    for col, (label, value) in zip(row1, items[:4]):
-        with col:
-            st.metric(label=label, value=f"{value:,}".replace(",", "."))
-    for col, (label, value) in zip(row2, items[4:]):
-        with col:
-            st.metric(label=label, value=f"{value:,}".replace(",", "."))
+    cards = ""
+    for icon, label, value, accent in items:
+        formatted = f"{value:,}".replace(",", ".")
+        cards += f"""
+        <div class="kpi-card" style="--accent:{accent};">
+            <span class="kpi-icon">{icon}</span>
+            <div class="kpi-value">{formatted}</div>
+            <div class="kpi-label">{label}</div>
+        </div>"""
+    st.markdown(f'<div class="kpi-grid">{cards}</div>', unsafe_allow_html=True)
 
 
 # --------------------------------------------------------------------------- #
