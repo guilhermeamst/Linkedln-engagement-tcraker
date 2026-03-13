@@ -178,8 +178,8 @@ LINKEDIN_COMPANY_URL=https://www.linkedin.com/company/SUA_EMPRESA/admin/page-pos
 | Variável | Padrão | Descrição |
 |----------|--------|-----------|
 | `DB_PATH` | `linkedin_engagement.db` | Caminho do banco SQLite |
-| `SCRAPER_DATA_INICIO` | `2026-01-01` | Data de início da coleta |
-| `SCRAPER_DATA_FIM` | — | Data de fim (vazio = até hoje) |
+| `SCRAPER_DATA_INICIO` | `2026-01-01` (01/01/2026) | Data de início da coleta |
+| `SCRAPER_DATA_FIM` | — | Data de fim (vazio = até hoje) — formato `AAAA-MM-DD` |
 | `SCRAPER_MAX_POSTS` | `200` | Máximo de posts por execução |
 | `BROWSER_HEADLESS` | `true` | `false` para ver o browser em tempo real |
 | `BROWSER_SLOW_MO_MS` | `100` | Delay entre ações em ms (simula humano) |
@@ -200,7 +200,8 @@ python scripts/coletar_engajamento.py
 # Limitar número de posts
 python scripts/coletar_engajamento.py --max-posts 50
 
-# Coletar a partir de uma data específica
+# Coletar a partir de uma data específica (formato obrigatório: AAAA-MM-DD)
+# Exemplo: 01/02/2026 → 2026-02-01
 python scripts/coletar_engajamento.py --desde 2026-02-01
 
 # Ver o browser durante a execução (útil para debug e captchas)

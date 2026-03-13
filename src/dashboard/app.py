@@ -14,6 +14,7 @@ from pathlib import Path
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+import streamlit.components.v1 as components
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
@@ -28,6 +29,71 @@ from src.services.engagement_service import EngagementService
 from src.services.ranking_service import RankingService
 
 logger = get_logger(__name__)
+
+
+def _inject_calendario_pt() -> None:
+    """Injeta JS que traduz meses e dias do calendário Streamlit para português."""
+    components.html("""
+    <script>
+    (function () {
+        const MESES = {
+            'January':'Janeiro','February':'Fevereiro','March':'Março',
+            'April':'Abril','May':'Maio','June':'Junho','July':'Julho',
+            'August':'Agosto','September':'Setembro','October':'Outubro',
+            'November':'Novembro','December':'Dezembro'
+        };
+        const DIAS_ABR  = {'Su':'Dom','Mo':'Seg','Tu':'Ter','We':'Qua','Th':'Qui','Fr':'Sex','Sa':'Sáb'};
+        const DIAS_FULL = {
+            'Sunday':'Domingo','Monday':'Segunda-feira','Tuesday':'Terça-feira',
+            'Wednesday':'Quarta-feira','Thursday':'Quinta-feira',
+            'Friday':'Sexta-feira','Saturday':'Sábado'
+        };
+
+        function traduzir() {
+            try {
+                const doc = window.parent.document;
+
+                // Opções do dropdown de mês (<select> ou [role="option"])
+                doc.querySelectorAll(
+                    '[data-baseweb="calendar"] select option, ' +
+                    '[data-baseweb="calendar"] [role="option"]'
+                ).forEach(el => {
+                    const t = el.textContent.trim();
+                    if (MESES[t]) el.textContent = MESES[t];
+                });
+
+                // Abreviações dos dias da semana no cabeçalho
+                doc.querySelectorAll('[data-baseweb="calendar"] abbr').forEach(el => {
+                    const t = el.textContent.trim();
+                    if (DIAS_ABR[t])  el.textContent = DIAS_ABR[t];
+                    if (DIAS_FULL[el.title]) el.title = DIAS_FULL[el.title];
+                });
+
+                // Botão de mês visível no header (ex.: "March ▾")
+                doc.querySelectorAll(
+                    '[data-baseweb="calendar"] [aria-live="polite"], ' +
+                    '[data-baseweb="calendar"] [data-testid="stDateInputCalendarHeader"] button, ' +
+                    '[data-baseweb="calendar"] button'
+                ).forEach(el => {
+                    if (el.childElementCount > 0) return;
+                    const t = el.textContent.trim();
+                    if (MESES[t]) el.textContent = MESES[t];
+                });
+
+            } catch (_) {}
+        }
+
+        try {
+            new MutationObserver(traduzir).observe(
+                window.parent.document.body,
+                { childList: true, subtree: true }
+            );
+            traduzir();
+        } catch (_) {}
+    })();
+    </script>
+    """, height=0)
+
 
 # --------------------------------------------------------------------------- #
 #  Configuração da Página
@@ -355,9 +421,9 @@ def _render_header(data_min: date, data_max: date) -> tuple[date, date]:
 
         col_de, col_ate = st.columns(2)
         with col_de:
-            st.date_input("De", min_value=data_min, max_value=data_max, key="filtro_inicio_widget")
+            st.date_input("De", min_value=data_min, max_value=data_max, key="filtro_inicio_widget", format="DD/MM/YYYY")
         with col_ate:
-            st.date_input("Até", min_value=data_min, max_value=data_max, key="filtro_fim_widget")
+            st.date_input("Até", min_value=data_min, max_value=data_max, key="filtro_fim_widget", format="DD/MM/YYYY")
 
         col_aplicar, col_reset = st.columns(2)
         with col_aplicar:
@@ -638,7 +704,7 @@ def _render_engajamento_por_post(df_posts: pd.DataFrame) -> None:
         df = df.drop(columns=["url_post"])
 
     if "data_post" in df.columns:
-        df["data_post"] = df["data_post"].dt.date
+        df["data_post"] = df["data_post"].dt.strftime("%d/%m/%Y")
 
     df = df.rename(columns={
         "post_id":          "Post ID",
@@ -672,6 +738,7 @@ def _render_engajamento_por_post(df_posts: pd.DataFrame) -> None:
 
 def main() -> None:
     _render_sidebar()
+    _inject_calendario_pt()
 
     # Carrega dados completos (para obter min/max de datas e cache)
     with st.spinner("Carregando dados..."):
