@@ -110,6 +110,24 @@ st.markdown("""
         text-transform: uppercase;
         letter-spacing: 0.09em;
     }
+    .kpi-section-title {
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: #3d4b65;
+        text-transform: uppercase;
+        letter-spacing: 0.13em;
+        margin: 1.2rem 0 0.55rem 0.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .kpi-section-title::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, #2d3250 0%, transparent 100%);
+    }
+
     @media screen and (max-width: 900px) {
         .kpi-grid { grid-template-columns: repeat(3, 1fr) !important; }
         .kpi-value { font-size: 1.6rem !important; }
@@ -341,7 +359,6 @@ def _render_header() -> None:
     )
     st.markdown('<h1 class="main-title">LinkedIn Engagement Tracker</h1>', unsafe_allow_html=True)
     st.markdown('<p class="subtitulo">Ranking de engajamento da página corporativa — 2026</p>', unsafe_allow_html=True)
-    st.markdown("---")
 
 
 # --------------------------------------------------------------------------- #
@@ -349,25 +366,34 @@ def _render_header() -> None:
 # --------------------------------------------------------------------------- #
 
 def _render_kpis(kpis: dict) -> None:
-    items = [
-        ("💬", "Interações",        kpis["total_interacoes"],  "#0077b6"),
-        ("⭐", "Pontos Totais",      kpis["pontos_totais"],     "#f4c430"),
-        ("📄", "Posts",             kpis["total_posts"],       "#00b4d8"),
-        ("👤", "Usuários",          kpis["total_usuarios"],    "#48cae4"),
-        ("👍", "Reações",           kpis["total_reactions"],   "#06d6a0"),
-        ("💬", "Comentários",       kpis["total_comentarios"], "#a855f7"),
-        ("🔄", "Compartilhamentos", kpis["total_shares"],      "#f97316"),
+    GRUPOS = [
+        ("Resumo Geral", [
+            ("💬", "Interações",   kpis["total_interacoes"], "#0077b6"),
+            ("⭐", "Pontos Totais", kpis["pontos_totais"],    "#f4c430"),
+            ("📄", "Posts",        kpis["total_posts"],      "#00b4d8"),
+            ("👤", "Usuários",     kpis["total_usuarios"],   "#48cae4"),
+        ]),
+        ("Engajamento", [
+            ("👍", "Reações",           kpis["total_reactions"],   "#06d6a0"),
+            ("💬", "Comentários",       kpis["total_comentarios"], "#a855f7"),
+            ("🔄", "Compartilhamentos", kpis["total_shares"],      "#f97316"),
+        ]),
     ]
-    cards = ""
-    for icon, label, value, accent in items:
-        formatted = f"{value:,}".replace(",", ".")
-        cards += f"""
-        <div class="kpi-card" style="--accent:{accent};">
-            <span class="kpi-icon">{icon}</span>
-            <div class="kpi-value">{formatted}</div>
-            <div class="kpi-label">{label}</div>
-        </div>"""
-    st.markdown(f'<div class="kpi-grid">{cards}</div>', unsafe_allow_html=True)
+
+    html = ""
+    for titulo, items in GRUPOS:
+        html += f'<div class="kpi-section-title">{titulo}</div><div class="kpi-grid">'
+        for icon, label, value, accent in items:
+            formatted = f"{value:,}".replace(",", ".")
+            html += f"""
+            <div class="kpi-card" style="--accent:{accent};">
+                <span class="kpi-icon">{icon}</span>
+                <div class="kpi-value">{formatted}</div>
+                <div class="kpi-label">{label}</div>
+            </div>"""
+        html += "</div>"
+
+    st.markdown(html, unsafe_allow_html=True)
 
 
 # --------------------------------------------------------------------------- #
