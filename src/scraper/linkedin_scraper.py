@@ -1596,12 +1596,30 @@ class LinkedInScraper:
             # Prioridade 1: time[datetime]
             time_el = card.locator("time[datetime]")
             if time_el.count() > 0:
+                # 1a: atributo datetime (ISO 8601 absoluto, ex: "2026-02-27T10:00:00Z")
                 dt = time_el.first.get_attribute("datetime") or ""
                 if dt:
                     try:
                         return datetime.fromisoformat(dt[:10]).date()
                     except ValueError:
                         pass
+
+                # 1b: aria-label contém data por extenso, ex: "27 de fevereiro de 2026"
+                aria = time_el.first.get_attribute("aria-label") or ""
+                if aria:
+                    r = _parse_data_relativa(aria)
+                    if r:
+                        return r
+
+                # 1c: texto interno do elemento time
+                try:
+                    texto_time = time_el.first.inner_text().strip()
+                    if texto_time:
+                        r = _parse_data_relativa(texto_time)
+                        if r:
+                            return r
+                except Exception:
+                    pass
 
             # Prioridade 2: seletores de timestamp
             for sel in [
