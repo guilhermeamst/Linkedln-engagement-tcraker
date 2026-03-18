@@ -1,8 +1,9 @@
 """
-coletar_post_unico.py - Coleta engajamento de um único post específico.
+coletar_post_unico.py - Coleta engajamento de um ou mais posts específicos.
 
 Uso:
     python scripts/coletar_post_unico.py --post-id 7439626651308826624
+    python scripts/coletar_post_unico.py --post-id 111 222 333
     python scripts/coletar_post_unico.py --url "https://www.linkedin.com/feed/update/urn:li:activity:7439626651308826624/"
     python scripts/coletar_post_unico.py --post-id 7439626651308826624 --mostrar-browser
     python scripts/coletar_post_unico.py --post-id 7439626651308826624 --forcar
@@ -53,11 +54,12 @@ def extrair_post_id(valor: str) -> str:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="LinkedIn Engagement Tracker - Coleta de post único",
+        description="LinkedIn Engagement Tracker - Coleta de posts específicos",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Exemplos:
   python scripts/coletar_post_unico.py --post-id 7439626651308826624
+  python scripts/coletar_post_unico.py --post-id 111111111 222222222 333333333
   python scripts/coletar_post_unico.py --url "https://www.linkedin.com/feed/update/urn:li:activity:7439626651308826624/"
   python scripts/coletar_post_unico.py --post-id 7439626651308826624 --mostrar-browser
   python scripts/coletar_post_unico.py --post-id 7439626651308826624 --forcar
@@ -67,12 +69,14 @@ Exemplos:
     grupo.add_argument(
         "--post-id",
         metavar="ID",
-        help="ID numérico do post (ex.: 7439626651308826624)",
+        nargs="+",
+        help="Um ou mais IDs numéricos de posts (ex.: 111 222 333)",
     )
     grupo.add_argument(
         "--url",
         metavar="URL",
-        help="URL completa do post no LinkedIn",
+        nargs="+",
+        help="Uma ou mais URLs de posts no LinkedIn",
     )
     parser.add_argument(
         "--mostrar-browser",
@@ -92,14 +96,18 @@ Exemplos:
 def main() -> None:
     args = parse_args()
 
-    # Resolve o post ID
-    try:
-        post_id = extrair_post_id(args.post_id or args.url)
-    except ValueError as e:
-        print(f"\nERRO: {e}")
-        sys.exit(1)
+    # Resolve todos os post IDs
+    valores = args.post_id or args.url
+    post_ids: list[str] = []
+    for v in valores:
+        try:
+            post_ids.append(extrair_post_id(v))
+        except ValueError as e:
+            print(f"\nERRO: {e}")
+            sys.exit(1)
 
-    print(f"\nPost alvo: {post_id}")
+    alvos = set(post_ids)
+    print(f"\nPosts alvo ({len(post_ids)}): {', '.join(post_ids)}")
 
     # Carrega configuração
     try:
@@ -136,38 +144,45 @@ def main() -> None:
     svc       = EngagementService(eng_repo, post_repo, user_repo)
     rank_svc  = RankingService()
 
+    pendentes = set(alvos)  # posts ainda não processados
+
     def deve_pular(pid: str, total_r: int, total_c: int, total_s: int) -> bool:
-        """Pula todos os posts exceto o alvo. Se --forcar, reprocessa sempre."""
-        if pid != post_id:
-            return True  # não é o post que queremos
+        """Pula todos os posts exceto os alvos. Se --forcar, reprocessa sempre."""
+        if pid not in alvos:
+            return True  # não é nenhum dos posts que queremos
+        if pid not in pendentes:
+            return True  # já foi processado nesta execução
         if args.forcar:
             return False  # forçar reprocessamento
         # Verifica se já está no banco com os mesmos totais
         post_db = post_repo.buscar_por_id(pid)
         if post_db is None:
             return False
-        contagens   = svc.contar_interacoes_por_tipo(pid)
+        contagens      = svc.contar_interacoes_por_tipo(pid)
         reactions_db   = contagens.get("reaction", 0)
         comentarios_db = contagens.get("comentario", 0)
         shares_db      = contagens.get("share", 0)
         if reactions_db == total_r and comentarios_db == total_c and shares_db == total_s:
             print(f"\nPost {pid} já está atualizado no banco (reactions={total_r}, comentários={total_c}, shares={total_s}).")
             print("Use --forcar para reprocessar mesmo assim.")
+            pendentes.discard(pid)
             return True
         return False
 
-    encontrado = False
+    encontrados: list[str] = []
     try:
         with LinkedInScraper(config.linkedin, config.scraper) as scraper:
             print("Realizando login no LinkedIn...")
             scraper.login()
-            print("Login OK. Buscando post na página de admin...")
+            print("Login OK. Buscando posts na página de admin...")
 
             for post, engagements in scraper.coletar_posts(deve_pular=deve_pular):
-                if post.post_id != post_id:
+                if post.post_id not in pendentes:
                     continue  # segurança extra
 
-                encontrado = True
+                encontrados.append(post.post_id)
+                pendentes.discard(post.post_id)
+
                 print(f"\nPost encontrado: {post.post_id}")
                 print(f"  Data:         {post.data_post}")
                 print(f"  URL:          {post.url_post}")
@@ -180,17 +195,8 @@ def main() -> None:
                 print(f"\n  Inseridos:   {res['inseridos']}")
                 print(f"  Duplicatas:  {res['duplicatas']}")
 
-                # Mostra top engajadores desse post
-                df = svc.get_ranking_dataframe()
-                if not df.empty:
-                    df_post = df[df["post_id"] == post_id] if "post_id" in df.columns else df
-                    ranking = rank_svc.calcular_ranking_from_df_agregado(df)
-                    if ranking:
-                        print("\n  Top 5 engajadores do período:")
-                        for u in ranking[:5]:
-                            print(f"    {u.posicao}° {u.usuario:<28} {u.pontos:>5} pts")
-
-                break  # encerra o generator após processar o post alvo
+                if not pendentes:
+                    break  # todos os posts alvo foram processados
 
     except KeyboardInterrupt:
         print("\nInterrompido pelo usuário.")
@@ -202,11 +208,12 @@ def main() -> None:
     finally:
         db.dispose()
 
-    if not encontrado:
-        print(
-            f"\nPost {post_id} não encontrado na página de admin.\n"
-            "Verifique se o ID está correto e se o post ainda está publicado."
-        )
+    if pendentes:
+        for pid in pendentes:
+            print(
+                f"\nPost {pid} não encontrado na página de admin.\n"
+                "Verifique se o ID está correto e se o post ainda está publicado."
+            )
         sys.exit(1)
 
     print("\nColeta concluída com sucesso.")
