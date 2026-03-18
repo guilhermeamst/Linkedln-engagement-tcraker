@@ -92,6 +92,9 @@ st.set_page_config(
 
 st.markdown("""
 <style>
+    /* ── Viewport mobile ─────────────────────────────────────────── */
+    @-ms-viewport { width: device-width; }
+
     /* ── Base ────────────────────────────────────────────────────────── */
     .main { background-color: #0f1116; }
     .block-container {
@@ -202,6 +205,7 @@ st.markdown("""
 
     /* ── Misc ────────────────────────────────────────────────────────── */
     hr { border-color: #2d3250; margin: 1.5rem 0; }
+    html, body, .main { overflow-x: hidden; }
     section[data-testid="stSidebar"] { background-color: #13151f; }
     section[data-testid="stSidebar"] *:not(button):not(button *) { color: #ccd6f6; }
     section[data-testid="stSidebar"] button {
@@ -214,45 +218,90 @@ st.markdown("""
     section[data-testid="stSidebar"] table {
         font-size: 0.82rem; width: 100%; overflow-x: auto; display: block;
     }
+    [data-testid="stDataFrame"] { overflow-x: auto !important; }
     [data-testid="stDataFrame"] > div { overflow-x: auto !important; }
     [data-testid="stHorizontalBlock"],
     [data-testid="stColumns"] { flex-wrap: wrap !important; gap: 0.5rem !important; }
 
     /* ── Responsividade ──────────────────────────────────────────────── */
     @media screen and (max-width: 900px) {
-        .block-container { padding: 3rem 1rem 1.5rem 1rem !important; }
+        .block-container { padding: 3rem 1.25rem 1.5rem 1.25rem !important; }
         .main-title { font-size: 2.2rem !important; }
         .kpi-grid { grid-template-columns: repeat(3, 1fr) !important; }
         .kpi-value { font-size: 1.6rem !important; }
-        [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
-        [data-testid="stColumn"] {
-            flex: 1 1 calc(33% - 0.5rem) !important;
-            min-width: calc(33% - 0.5rem) !important;
-        }
     }
+
     @media screen and (max-width: 640px) {
-        .block-container { padding: 2rem 0.5rem 1rem 0.5rem !important; }
-        .main-title  { font-size: 1.75rem !important; }
-        .subtitulo   { font-size: 0.82rem !important; }
-        .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 0.6rem !important; }
-        .kpi-card { padding: 1rem 1rem 0.85rem !important; }
-        .kpi-value { font-size: 1.4rem !important; }
-        .kpi-label { font-size: 0.65rem !important; }
-        .top-card   { padding: 1rem 0.75rem !important; margin: 0.2rem 0 !important; }
-        .medal      { font-size: 2rem !important; }
-        .top-nome   { font-size: 0.9rem !important; }
-        .top-pontos { font-size: 1.4rem !important; }
-        .top-detalhe { font-size: 0.7rem !important; }
-        [data-testid="stHorizontalBlock"] > div[data-testid="stColumn"]:has(.js-plotly-plot),
-        [data-testid="stColumn"]:has(.js-plotly-plot) {
-            flex: 1 1 100% !important; min-width: 100% !important;
+        /* Espaçamento geral */
+        .block-container { padding: 1.5rem 1.25rem 1.25rem 1.25rem !important; }
+
+        /* Tipografia do cabeçalho */
+        .main-title  { font-size: 2.2rem !important; line-height: 1.25 !important; }
+        .subtitulo   { font-size: 1.1rem !important; margin-top: 0.35rem !important; }
+
+        /* KPI cards — 2 colunas */
+        .kpi-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 0.75rem !important;
+        }
+        .kpi-card  { padding: 1.3rem 1.15rem 1.15rem !important; }
+        .kpi-icon  { font-size: 1.7rem !important; margin-bottom: 0.55rem !important; }
+        .kpi-value { font-size: 1.85rem !important; }
+        .kpi-label { font-size: 0.85rem !important; }
+        .kpi-section-title { font-size: 0.82rem !important; margin: 1.1rem 0 0.55rem !important; }
+
+        /* Top 3 cards */
+        .top-card    { padding: 1.5rem 1.25rem !important; margin: 0.15rem 0 !important; }
+        .medal       { font-size: 3rem !important; }
+        .top-nome    { font-size: 1.2rem !important; }
+        .top-pontos  { font-size: 1.85rem !important; }
+        .top-detalhe { font-size: 0.95rem !important; }
+
+        /* Empilha TODAS as colunas Streamlit verticalmente */
+        div[data-testid="stHorizontalBlock"],
+        div[data-testid="stColumns"] {
+            flex-direction: column !important;
+            flex-wrap: wrap !important;
+            gap: 0.4rem !important;
+        }
+        div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"],
+        div[data-testid="stColumns"] > div[data-testid="stColumn"] {
+            width: 100% !important;
+            flex: 0 0 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        /* Botões touch-friendly */
+        button { min-height: 48px !important; font-size: 1rem !important; }
+
+        /* Plotly — largura total */
+        .js-plotly-plot, .plot-container { width: 100% !important; }
+        .stPlotlyChart > div { height: auto !important; }
+
+        /* Tabelas com scroll horizontal */
+        [data-testid="stDataFrame"],
+        [data-testid="stDataFrame"] > div {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
         }
     }
+
     @media screen and (max-width: 420px) {
-        .block-container { padding: 1.5rem 0.25rem 0.75rem 0.25rem !important; }
-        .main-title { font-size: 1.4rem !important; }
-        .kpi-grid { grid-template-columns: 1fr !important; }
-        .top-pontos { font-size: 1.2rem !important; }
+        .block-container { padding: 1.25rem 1rem 1rem 1rem !important; }
+        .main-title { font-size: 1.85rem !important; }
+        .subtitulo  { font-size: 1rem !important; }
+        .kpi-grid {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 0.6rem !important;
+        }
+        .kpi-card  { padding: 1.15rem 1rem !important; }
+        .kpi-value { font-size: 1.65rem !important; }
+        .kpi-icon  { font-size: 1.5rem !important; }
+        .kpi-label { font-size: 0.8rem !important; }
+        .top-pontos  { font-size: 1.65rem !important; }
+        .top-nome    { font-size: 1.1rem !important; }
+        .top-detalhe { font-size: 0.88rem !important; }
     }
 </style>
 """, unsafe_allow_html=True)
@@ -486,20 +535,22 @@ def _render_top3(ranking) -> None:
     top3     = ranking[:3]
     medalhas = [("🥇", "top-card-gold"), ("🥈", "top-card-silver"), ("🥉", "top-card-bronze")]
 
-    # Gera HTML de todos os cards de uma vez para melhor controle mobile
-    cards_html = '<div style="display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:center;">'
+    # Gera HTML de todos os cards — flex responsivo: lado a lado no desktop, empilhado no mobile
+    cards_html = (
+        '<div style="display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:center; '
+        'align-items:stretch;">'
+    )
     for rank_idx in range(len(top3)):
         u = top3[rank_idx]
         medalha, classe = medalhas[rank_idx]
         cards_html += f"""
-        <div class="top-card {classe}" style="flex:1 1 200px; max-width:320px;">
+        <div class="top-card {classe}"
+             style="flex:1 1 min(200px, 100%); max-width:min(340px, 100%); box-sizing:border-box;">
             <div class="medal">{medalha}</div>
             <div class="top-nome">{u.usuario}</div>
             <div class="top-pontos">{u.pontos} pts</div>
             <div class="top-detalhe">
-                👍 {u.reactions} &nbsp;|&nbsp;
-                💬 {u.comentarios} &nbsp;|&nbsp;
-                🔄 {u.shares}
+                👍 {u.reactions}&nbsp;&nbsp;💬 {u.comentarios}&nbsp;&nbsp;🔄 {u.shares}
             </div>
         </div>"""
     cards_html += "</div>"
