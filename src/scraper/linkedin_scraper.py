@@ -14,7 +14,7 @@ import hashlib
 import random
 import re
 import time
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Callable, Generator, List, Optional, Tuple
 
 from playwright.sync_api import (
@@ -195,6 +195,21 @@ def _extrair_post_id_da_urn(urn: str) -> Optional[str]:
         return m.group(1)
     digits = re.findall(r"\d{10,}", urn)
     return digits[-1] if digits else None
+
+
+def _date_from_activity_id(activity_id: str) -> Optional[date]:
+    """Decodifica a data de publicação diretamente do Snowflake ID do LinkedIn.
+
+    LinkedIn activity IDs codificam o timestamp Unix (ms) nos 41 bits mais
+    significativos: (id >> 22) = ms desde o epoch Unix (1970-01-01 UTC).
+    Isso fornece a data exata de publicação, sem depender de datas relativas
+    imprecisas do HTML ("2 semanas", "3 dias", etc.).
+    """
+    try:
+        ts_ms = int(activity_id) >> 22
+        return datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc).date()
+    except Exception:
+        return None
 
 
 def _parse_data_relativa(texto: str) -> Optional[date]:
@@ -486,9 +501,20 @@ class LinkedInScraper:
                 f"https://www.linkedin.com/feed/update/{proximo_urn}/"
             )
 
-            data_post = self._extrair_data_do_card(proximo_card)
+            # Prioridade 1: decode do Snowflake ID — data exata embutida no ID do LinkedIn.
+            # Prioridade 2: data exibida no card HTML (pode ser relativa e imprecisa,
+            # ex.: "1 semana" que resulta em hoje-7 dias e não na data real de publicação).
+            data_post = _date_from_activity_id(act_id) or self._extrair_data_do_card(proximo_card)
 
-            if data_post and data_post > self._scraper_cfg.data_fim:
+            if data_post is None:
+                logger.warning(
+                    "Post %s sem data detectável. Pulando para não salvar sem data.",
+                    post_id,
+                )
+                total_processados += 1
+                continue
+
+            if data_post > self._scraper_cfg.data_fim:
                 logger.info(
                     "Post %s em %s — posterior a %s. Pulando.",
                     post_id, data_post, self._scraper_cfg.data_fim,
@@ -496,13 +522,12 @@ class LinkedInScraper:
                 total_processados += 1
                 continue
 
-            if data_post and data_post < self._scraper_cfg.data_inicio:
+            if data_post < self._scraper_cfg.data_inicio:
                 logger.info(
-                    "Post %s em %s — anterior a %s. Pulando.",
+                    "Post %s em %s — anterior a %s. Encerrando coleta.",
                     post_id, data_post, self._scraper_cfg.data_inicio,
                 )
-                total_processados += 1
-                continue
+                break
 
             # Lê totais exibidos no card (mais precisos que contar nomes coletados,
             # pois alguns perfis privados não aparecem no modal)
@@ -1593,10 +1618,9 @@ class LinkedInScraper:
     def _extrair_data_do_card(self, card) -> Optional[date]:
         """Extrai a data de publicação diretamente do card, sem navegar."""
         try:
-            # Prioridade 1: time[datetime]
+            # Prioridade 1: time[datetime] — atributo ISO 8601 absoluto
             time_el = card.locator("time[datetime]")
             if time_el.count() > 0:
-                # 1a: atributo datetime (ISO 8601 absoluto, ex: "2026-02-27T10:00:00Z")
                 dt = time_el.first.get_attribute("datetime") or ""
                 if dt:
                     try:
@@ -1604,14 +1628,26 @@ class LinkedInScraper:
                     except ValueError:
                         pass
 
-                # 1b: aria-label contém data por extenso, ex: "27 de fevereiro de 2026"
+            # Prioridade 2: data absoluta no texto do card
+            # Formato admin LinkedIn: "De Fulano • 27/02/2026"
+            # Usa [•·] (bullet) para não casar com hífens em nomes compostos.
+            try:
+                texto_card = card.inner_text()
+                m = re.search(r"De .+?[•·]\s*(\d{1,2}/\d{1,2}/\d{4})", texto_card)
+                if m:
+                    r = _parse_data_relativa(m.group(1).strip())
+                    if r:
+                        return r
+            except Exception:
+                pass
+
+            # Prioridade 3: aria-label do elemento time (pode ser por extenso)
+            if time_el.count() > 0:
                 aria = time_el.first.get_attribute("aria-label") or ""
                 if aria:
                     r = _parse_data_relativa(aria)
                     if r:
                         return r
-
-                # 1c: texto interno do elemento time
                 try:
                     texto_time = time_el.first.inner_text().strip()
                     if texto_time:
@@ -1621,7 +1657,7 @@ class LinkedInScraper:
                 except Exception:
                     pass
 
-            # Prioridade 2: seletores de timestamp
+            # Prioridade 4: seletores CSS de timestamp (podem retornar datas relativas)
             for sel in [
                 "span[class*='actor__sub-description']",
                 "span[class*='subline-level']",
@@ -1640,12 +1676,6 @@ class LinkedInScraper:
                             return r
                     except Exception:
                         continue
-
-            # Prioridade 3: texto completo do card
-            texto_card = card.inner_text()
-            m = re.search(r"De .+? - (.+?)(?:\n|$)", texto_card)
-            if m:
-                return _parse_data_relativa(m.group(1).strip())
 
         except Exception:
             pass

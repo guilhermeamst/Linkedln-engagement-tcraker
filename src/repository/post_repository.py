@@ -83,10 +83,17 @@ class PostRepository(IPostRepository):
             stmt = (
                 sqlite_insert(PostORM)
                 .values(**vals)
-                .on_conflict_do_nothing(index_elements=["post_id"])
+                .on_conflict_do_update(
+                    index_elements=["post_id"],
+                    set_={
+                        "total_likes":       vals["total_likes"],
+                        "total_comentarios": vals["total_comentarios"],
+                        "total_shares":      vals["total_shares"],
+                    },
+                )
             )
             session.execute(stmt)
-        logger.debug("Post salvo (ignorado se já existia): %s", post.post_id)
+        logger.debug("Post salvo/atualizado: %s", post.post_id)
 
     def salvar_em_lote(self, posts: List[Post]) -> None:
         if not posts:
@@ -97,10 +104,17 @@ class PostRepository(IPostRepository):
                 stmt = (
                     sqlite_insert(PostORM)
                     .values(**vals)
-                    .on_conflict_do_nothing(index_elements=["post_id"])
+                    .on_conflict_do_update(
+                        index_elements=["post_id"],
+                        set_={
+                            "total_likes":       vals["total_likes"],
+                            "total_comentarios": vals["total_comentarios"],
+                            "total_shares":      vals["total_shares"],
+                        },
+                    )
                 )
                 session.execute(stmt)
-        logger.info("%d posts processados em lote (ignorados se já existiam).", len(posts))
+        logger.info("%d posts processados em lote (upsert).", len(posts))
 
     def buscar_por_id(self, post_id: str) -> Optional[Post]:
         with self._db.get_session() as session:

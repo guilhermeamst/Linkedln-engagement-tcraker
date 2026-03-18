@@ -13,12 +13,13 @@ Sistema interno para medir e ranquear o engajamento de colaboradores e parceiros
 5. [Instalação](#instalação)
 6. [Configuração](#configuração)
 7. [Como Executar](#como-executar)
-8. [Dashboard](#dashboard)
-9. [Sistema de Pontuação](#sistema-de-pontuação)
-10. [Banco de Dados](#banco-de-dados)
-11. [Testes](#testes)
-12. [Limitações e Boas Práticas](#limitações-e-boas-práticas)
-13. [Troubleshooting](#troubleshooting)
+8. [Coleta de Post Único](#coleta-de-post-único)
+9. [Dashboard](#dashboard)
+10. [Sistema de Pontuação](#sistema-de-pontuação)
+11. [Banco de Dados](#banco-de-dados)
+12. [Testes](#testes)
+13. [Limitações e Boas Práticas](#limitações-e-boas-práticas)
+14. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -101,7 +102,8 @@ linkedin-engagement-tracker/
 │       └── app.py                 # Dashboard executivo Streamlit
 │
 ├── scripts/
-│   └── coletar_engajamento.py     # Entry point CLI da coleta
+│   ├── coletar_engajamento.py     # Entry point CLI da coleta completa
+│   └── coletar_post_unico.py      # Coleta de um post específico por ID ou URL
 │
 ├── tests/
 │   ├── test_ranking_service.py    # 20+ testes unitários
@@ -227,6 +229,37 @@ Pos  Usuário                        Pts  React  Coment  Shares  Nível
  3°  Pedro Costa                     18     12       3       0  ◆ Entusiasta
 ...
 ```
+
+---
+
+## Coleta de Post Único
+
+Use o script `coletar_post_unico.py` quando quiser processar apenas um post específico — sem varrer toda a página de admin.
+
+```bash
+# Passando o ID numérico do post
+python scripts/coletar_post_unico.py --post-id 7439626651308826624
+
+# Passando a URL completa do LinkedIn
+python scripts/coletar_post_unico.py --url "https://www.linkedin.com/feed/update/urn:li:activity:7439626651308826624/"
+
+# Exibir o browser durante a execução
+python scripts/coletar_post_unico.py --post-id 7439626651308826624 --mostrar-browser
+
+# Forçar reprocessamento mesmo que o post já esteja atualizado no banco
+python scripts/coletar_post_unico.py --post-id 7439626651308826624 --forcar
+```
+
+**Como encontrar o ID ou a URL do post:**
+
+- Na página do LinkedIn, clique nos três pontinhos do post → **Copiar link do post**
+- O ID numérico aparece no final da URL: `...activity:7439626651308826624/`
+
+**Comportamento:**
+- O bot faz login normalmente e navega até a página de admin
+- Ignora todos os posts exceto o alvo (sem coletar engajamentos desnecessários)
+- Ao encontrar o post, coleta reações, comentários e shares e salva no banco
+- Se o post já estiver no banco com os mesmos totais, avisa sem reprocessar (use `--forcar` para sobrescrever)
 
 ---
 

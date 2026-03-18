@@ -226,27 +226,18 @@ class EngagementRepository(IEngagementRepository):
         return pd.DataFrame(rows, columns=columns)
 
     def get_engajamento_por_post_dataframe(self) -> pd.DataFrame:
-        """Engajamento agrupado por post com pontuação ponderada."""
+        """Engajamento por post usando os totais reais da tabela posts."""
         sql = text("""
             SELECT
-                e.post_id,
+                p.post_id,
                 p.data_post,
                 p.url_post,
-                SUM(CASE WHEN e.tipo = 'reaction'   THEN 1 ELSE 0 END) AS reactions,
-                SUM(CASE WHEN e.tipo = 'comentario' THEN 1 ELSE 0 END) AS comentarios,
-                SUM(CASE WHEN e.tipo = 'share'      THEN 1 ELSE 0 END) AS shares,
-                COUNT(*) AS total_interacoes,
-                SUM(
-                    CASE
-                        WHEN e.tipo = 'reaction'   THEN 1
-                        WHEN e.tipo = 'comentario' THEN 2
-                        WHEN e.tipo = 'share'      THEN 2
-                        ELSE 0
-                    END
-                ) AS pontos
-            FROM engagement e
-            LEFT JOIN posts p ON e.post_id = p.post_id
-            GROUP BY e.post_id
+                p.total_likes       AS reactions,
+                p.total_comentarios AS comentarios,
+                p.total_shares      AS shares,
+                (p.total_likes + p.total_comentarios + p.total_shares) AS total_interacoes,
+                (p.total_likes * 1 + p.total_comentarios * 2 + p.total_shares * 2) AS pontos
+            FROM posts p
             ORDER BY pontos DESC
         """)
         with self._db.get_session() as session:
@@ -313,16 +304,14 @@ class EngagementRepository(IEngagementRepository):
     def get_engajamento_por_post_dataframe_por_periodo(self, inicio: date, fim: date) -> pd.DataFrame:
         sql = text("""
             SELECT
-                e.post_id, p.data_post, p.url_post,
-                SUM(CASE WHEN e.tipo='reaction'   THEN 1 ELSE 0 END) AS reactions,
-                SUM(CASE WHEN e.tipo='comentario' THEN 1 ELSE 0 END) AS comentarios,
-                SUM(CASE WHEN e.tipo='share'      THEN 1 ELSE 0 END) AS shares,
-                COUNT(*) AS total_interacoes,
-                SUM(CASE WHEN e.tipo='reaction' THEN 1 WHEN e.tipo='comentario' THEN 2 WHEN e.tipo='share' THEN 2 ELSE 0 END) AS pontos
-            FROM engagement e
-            LEFT JOIN posts p ON e.post_id = p.post_id
+                p.post_id, p.data_post, p.url_post,
+                p.total_likes       AS reactions,
+                p.total_comentarios AS comentarios,
+                p.total_shares      AS shares,
+                (p.total_likes + p.total_comentarios + p.total_shares) AS total_interacoes,
+                (p.total_likes * 1 + p.total_comentarios * 2 + p.total_shares * 2) AS pontos
+            FROM posts p
             WHERE p.data_post >= :inicio AND p.data_post <= :fim
-            GROUP BY e.post_id
             ORDER BY pontos DESC
         """)
         with self._db.get_session() as session:
