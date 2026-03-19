@@ -70,6 +70,21 @@ def _inject_calendario_pt() -> None:
              .forEach(function(e){
                  if(!e.children.length){ var t=e.textContent.trim(); if(M[t]) e.textContent=M[t]; }
              });
+
+            /* Dias habilitados: mais brancos e destacados */
+            d.querySelectorAll('[data-baseweb="calendar"] [aria-disabled="false"], [data-baseweb="calendar"] button:not(:disabled)')
+             .forEach(function(e){
+                 if(e.textContent.trim() && !isNaN(e.textContent.trim())){
+                     e.style.color='#ffffff';
+                     e.style.fontWeight='600';
+                 }
+             });
+
+            /* Dias desabilitados ao mínimo */
+            d.querySelectorAll('[data-baseweb="calendar"] [aria-disabled="true"], [data-baseweb="calendar"] button:disabled')
+             .forEach(function(e){
+                 e.style.opacity='0.05';
+             });
         }catch(x){}
         requestAnimationFrame(run);
     }
@@ -467,21 +482,24 @@ def _render_header(data_min: date, data_max: date) -> tuple[date, date]:
                     fim = inicio
                 st.session_state["filtro_inicio_aplicado"] = inicio
                 st.session_state["filtro_fim_aplicado"]    = fim
+                st.session_state["_filtro_aplicado"] = True
                 st.rerun()
         with col_reset:
             if st.button("↺ Resetar", use_container_width=True, key="btn_reset_filtro_global"):
                 st.session_state["_reset_filtro_pending"] = True
+                st.session_state["_filtro_resetado"] = True
                 st.rerun()
 
-        inicio_ap = st.session_state["filtro_inicio_aplicado"]
-        fim_ap    = st.session_state["filtro_fim_aplicado"]
-        is_filtrado = (inicio_ap != data_min or fim_ap != data_max)
-        if is_filtrado:
-            st.markdown(
-                f'<p style="font-size:0.72rem; color:#00b4d8; margin:0.3rem 0 0 0;">'
-                f'🔵 {inicio_ap.strftime("%d/%m/%Y")} → {fim_ap.strftime("%d/%m/%Y")}</p>',
-                unsafe_allow_html=True,
-            )
+        if st.session_state.pop("_filtro_aplicado", False):
+            st.toast("Filtro aplicado com sucesso!", icon="✅")
+        if st.session_state.pop("_filtro_resetado", False):
+            st.toast("Filtro resetado com sucesso!", icon="✅")
+
+        st.markdown(
+            f'<p style="font-size:0.65rem; color:#adb5bd; opacity:0.6; margin:0.2rem 0 0 0;">'
+            f'Intervalo disponível: {data_min.strftime("%d/%m/%Y")} a {data_max.strftime("%d/%m/%Y")}</p>',
+            unsafe_allow_html=True,
+        )
 
     return st.session_state["filtro_inicio_aplicado"], st.session_state["filtro_fim_aplicado"]
 
