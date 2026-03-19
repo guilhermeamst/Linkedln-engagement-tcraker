@@ -710,12 +710,19 @@ def _render_ranking_completo(ranking) -> None:
     rank_svc = RankingService()
     df       = rank_svc.ranking_para_dataframe(ranking)
 
+    if "Nível" in df.columns:
+        df = df.drop(columns=["Nível"])
+
+    # Campo de busca manual (compatível com Styler)
+    busca = st.text_input("🔍 Pesquisar por nome", placeholder="Digite o nome do colaborador...", key="busca_ranking")
+    if busca:
+        col_nome = next((c for c in ["Usuário", "Nome", "usuario"] if c in df.columns), None)
+        if col_nome:
+            df = df[df[col_nome].str.contains(busca, case=False, na=False)].reset_index(drop=True)
+
     def _cor_posicao(val):
         cores = {"1°": "#ffd700", "2°": "#c0c0c0", "3°": "#cd7f32"}
         return f"color: {cores.get(val, '#ccd6f6')}; font-weight: bold;"
-
-    if "Nível" in df.columns:
-        df = df.drop(columns=["Nível"])
 
     fmt_cols = {c: "{:,}" for c in ["Pontos", "Reactions", "Comentários", "Shares", "Total Interações"] if c in df.columns}
 
