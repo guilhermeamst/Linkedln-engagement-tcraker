@@ -191,13 +191,22 @@ st.markdown("""
     }
     .subtitulo { color: #8892b0; font-size: 0.95rem; margin-top: 0.3rem; }
 
+    /* ── Pódio grid ──────────────────────────────────────────────────── */
+    .podium-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.55rem;
+        max-width: 1020px;
+        margin: 0 auto;
+    }
+
     /* ── Top 3 cards ─────────────────────────────────────────────────── */
     .top-card {
         background: linear-gradient(135deg, #1a1f35 0%, #252d4a 100%);
         border-radius: 16px; padding: 1.5rem 1rem; text-align: center;
         border: 1px solid #3d4466;
         box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-        margin: 0.4rem; height: 100%; box-sizing: border-box;
+        margin: 0; box-sizing: border-box;
         transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
     .top-card:hover { transform: translateY(-4px); }
@@ -265,8 +274,9 @@ st.markdown("""
         .kpi-label { font-size: 0.85rem !important; }
         .kpi-section-title { font-size: 0.82rem !important; margin: 1.1rem 0 0.55rem !important; }
 
-        /* Top 3 cards */
-        .top-card    { padding: 1.5rem 1.25rem !important; margin: 0.15rem 0 !important; }
+        /* Top 3 cards — força 1 coluna no mobile */
+        .top-card    { padding: 1.5rem 1.25rem !important; margin: 0 !important; }
+        .podium-grid { grid-template-columns: 1fr !important; }
         .medal       { font-size: 3rem !important; }
         .top-nome    { font-size: 1.2rem !important; }
         .top-pontos  { font-size: 1.85rem !important; }
@@ -553,17 +563,16 @@ def _render_top3(ranking) -> None:
     top3     = ranking[:3]
     medalhas = [("🥇", "top-card-gold"), ("🥈", "top-card-silver"), ("🥉", "top-card-bronze")]
 
-    # Gera HTML de todos os cards — flex responsivo: lado a lado no desktop, empilhado no mobile
+    # Gera HTML de todos os cards — grid 3 colunas iguais no desktop, empilhado no mobile
     cards_html = (
-        '<div style="display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:center; '
-        'align-items:stretch;">'
+        '<div class="podium-grid">'
     )
     for rank_idx in range(len(top3)):
         u = top3[rank_idx]
         medalha, classe = medalhas[rank_idx]
         cards_html += f"""
         <div class="top-card {classe}"
-             style="flex:1 1 min(200px, 100%); max-width:min(340px, 100%); box-sizing:border-box;">
+             style="margin:0; box-sizing:border-box;">
             <div class="medal">{medalha}</div>
             <div class="top-nome">{u.usuario}</div>
             <div class="top-pontos">{u.pontos} pts</div>
