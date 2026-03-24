@@ -13,6 +13,11 @@ Sistema interno para medir e ranquear o engajamento de colaboradores e parceiros
 5. [Instalação](#instalação)
 6. [Configuração](#configuração)
 7. [Como Executar](#como-executar)
+   - [Primeira vez](#fluxo-recomendado--primeira-vez)
+   - [Uso recorrente](#uso-recorrente-dia-a-dia)
+   - [Todos os argumentos](#todos-os-argumentos-disponíveis)
+   - [Exemplos por situação](#exemplos-por-situação)
+   - [O que acontece durante a coleta](#o-que-acontece-durante-a-coleta)
 8. [Coleta de Post Único](#coleta-de-post-único)
 9. [Dashboard](#dashboard)
 10. [Sistema de Pontuação](#sistema-de-pontuação)
@@ -193,30 +198,94 @@ LINKEDIN_COMPANY_URL=https://www.linkedin.com/company/SUA_EMPRESA/admin/page-pos
 
 ## Como Executar
 
-### Coleta de dados
+> **Pré-condição:** o ambiente virtual deve estar ativo e o arquivo `.env` configurado (veja [Instalação](#instalação) e [Configuração](#configuração)).
+
+---
+
+### Fluxo recomendado — primeira vez
+
+Siga esta ordem na primeira execução:
+
+**1. Teste com poucos posts (browser visível)**
+```bash
+python scripts/coletar_engajamento.py --max-posts 10 --mostrar-browser
+```
+Observe o browser abrir, fazer login e coletar. Se aparecer captcha ou verificação, resolva manualmente. Esse passo confirma que as credenciais e seletores estão funcionando.
+
+**2. Coleta completa**
+```bash
+python scripts/coletar_engajamento.py
+```
+Coleta todos os posts desde a data definida em `SCRAPER_DATA_INICIO` (padrão: `2026-01-01`). Pode levar vários minutos dependendo do volume de posts.
+
+**3. Abra o dashboard**
+```bash
+streamlit run src/dashboard/app.py
+```
+Acesse `http://localhost:8501` para ver o ranking, gráficos e estatísticas.
+
+---
+
+### Uso recorrente (dia a dia)
+
+Na maioria das execuções seguintes, basta rodar normalmente. O sistema identifica automaticamente o que mudou e processa apenas os posts com novidades:
 
 ```bash
-# Execução padrão
 python scripts/coletar_engajamento.py
-
-# Limitar número de posts
-python scripts/coletar_engajamento.py --max-posts 50
-
-# Coletar a partir de uma data específica (formato obrigatório: AAAA-MM-DD)
-# Exemplo: 01/02/2026 → 2026-02-01
-python scripts/coletar_engajamento.py --desde 2026-02-01
-
-# Ver o browser durante a execução (útil para debug e captchas)
-python scripts/coletar_engajamento.py --mostrar-browser
-
-# Apenas exibir o ranking atual (sem scraping)
-python scripts/coletar_engajamento.py --apenas-ranking
-
-# Combinações
-python scripts/coletar_engajamento.py --max-posts 100 --mostrar-browser
 ```
 
-### Saída esperada no terminal
+---
+
+### Todos os argumentos disponíveis
+
+| Argumento | Descrição | Exemplo |
+|-----------|-----------|---------|
+| *(sem argumentos)* | Coleta padrão — todos os posts desde `SCRAPER_DATA_INICIO` | `python scripts/coletar_engajamento.py` |
+| `--max-posts N` | Limita a N posts por execução | `--max-posts 50` |
+| `--desde AAAA-MM-DD` | Define data de início da coleta (sobrescreve o `.env`) | `--desde 2026-03-01` |
+| `--mostrar-browser` | Exibe o browser em tempo real (útil para debug e captchas) | `--mostrar-browser` |
+| `--apenas-ranking` | Exibe o ranking atual no terminal **sem** executar o scraper | `--apenas-ranking` |
+| `--somente-salvos` | Reprocessa apenas posts **já salvos** no banco — ignora posts novos | `--somente-salvos` |
+
+---
+
+### Exemplos por situação
+
+```bash
+# Verificar o ranking atual sem coletar nada
+python scripts/coletar_engajamento.py --apenas-ranking
+
+# Coletar apenas os posts do mês atual
+python scripts/coletar_engajamento.py --desde 2026-03-01
+
+# Atualizar engajamentos de posts já cadastrados (sem adicionar posts novos)
+python scripts/coletar_engajamento.py --somente-salvos
+
+# Debug: ver o browser e limitar a 20 posts
+python scripts/coletar_engajamento.py --max-posts 20 --mostrar-browser
+
+# Combinações
+python scripts/coletar_engajamento.py --max-posts 100 --desde 2026-02-01 --mostrar-browser
+python scripts/coletar_engajamento.py --somente-salvos --mostrar-browser
+```
+
+---
+
+### O que acontece durante a coleta
+
+Ao executar o script, o sistema:
+
+1. Faz login no LinkedIn com as credenciais do `.env`
+2. Navega até a página de admin de posts da empresa
+3. Para cada post encontrado:
+   - Verifica se já está no banco com os mesmos totais → **pula** se não houve mudança
+   - Abre o modal de reações e coleta os nomes
+   - Expande os comentários e coleta os comentaristas
+   - Abre o modal de shares e coleta quem compartilhou
+4. Salva tudo no banco (`linkedin_engagement.db`)
+5. Exibe o ranking atualizado no terminal ao final
+
+Ao terminar, o terminal exibe:
 
 ```
 ============================================================
@@ -228,6 +297,11 @@ Pos  Usuário                        Pts  React  Coment  Shares  Nível
  2°  Maria Santos                    31      5       8       4  ★ Embaixador
  3°  Pedro Costa                     18     12       3       0  ◆ Entusiasta
 ...
+
+  Total de interações: 1.482
+  Posts analisados:    24
+  Usuários únicos:     187
+  Pontos totais:       2.104
 ```
 
 ---

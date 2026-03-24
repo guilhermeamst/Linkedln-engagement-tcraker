@@ -44,12 +44,14 @@ Exemplos:
   python scripts/coletar_engajamento.py --desde 2026-02-01
   python scripts/coletar_engajamento.py --mostrar-browser
   python scripts/coletar_engajamento.py --apenas-ranking
+  python scripts/coletar_engajamento.py --somente-salvos
         """,
     )
     parser.add_argument("--max-posts",       type=int,                default=None, metavar="N",          help="Número máximo de posts a processar")
     parser.add_argument("--desde",           type=date.fromisoformat, default=None, metavar="YYYY-MM-DD", help="Data de início da coleta")
     parser.add_argument("--mostrar-browser", action="store_true",     default=False,                      help="Exibe o browser durante a execução")
     parser.add_argument("--apenas-ranking",  action="store_true",     default=False,                      help="Exibe o ranking atual sem coletar")
+    parser.add_argument("--somente-salvos",  action="store_true",     default=False,                      help="Reprocessa apenas posts já salvos no banco (ignora posts novos)")
     return parser.parse_args()
 
 
@@ -129,10 +131,13 @@ def main() -> None:
             db.dispose()
         sys.exit(0)
 
-    # Executa pipeline completo
+    # Executa pipeline
     try:
         pipeline = ETLPipeline.from_config(config)
-        result   = pipeline.executar()
+        if args.somente_salvos:
+            result = pipeline.executar_somente_posts_salvos()
+        else:
+            result = pipeline.executar()
     except Exception as e:
         logger.error("Falha ao inicializar pipeline: %s", e, exc_info=True)
         print(f"\nERRO: {e}")

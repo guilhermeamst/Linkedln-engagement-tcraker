@@ -183,6 +183,68 @@ class ETLPipeline:
 
         return reactions_db == total_r and comentarios_db == total_c and shares_db == total_s
 
+    def _pular_se_nao_salvo(self, post_id: str, total_r: int, total_c: int, total_s: int) -> bool:
+        """
+        Retorna True (pular) se o post NÃO está no banco.
+        Usado por executar_somente_posts_salvos() para reprocessar apenas posts existentes.
+        """
+        return not self._post_repo.post_existe(post_id)
+
+    # ------------------------------------------------------------------ #
+    #  Modo: reprocessar apenas posts já no banco
+    # ------------------------------------------------------------------ #
+
+    def executar_somente_posts_salvos(self) -> PipelineResult:
+        """
+        Roda o scraper mas processa APENAS os posts que já existem no banco.
+        Posts novos encontrados no LinkedIn são ignorados.
+        Útil para atualizar engajamentos de posts já cadastrados sem ampliar o escopo.
+        """
+        result = PipelineResult()
+        inicio = time.time()
+
+        posts_salvos = {p.post_id for p in self._post_repo.buscar_todos()}
+        logger.info("=" * 60)
+        logger.info("PIPELINE (somente posts salvos) INICIADO — %s", result.iniciado_em.isoformat())
+        logger.info("Posts no banco: %d", len(posts_salvos))
+        logger.info("=" * 60)
+
+        try:
+            with LinkedInScraper(self._config.linkedin, self._config.scraper) as scraper:
+                logger.info("Realizando login no LinkedIn...")
+                scraper.login()
+                logger.info("Login bem-sucedido. Iniciando coleta limitada ao banco...")
+
+                for post, engagements in scraper.coletar_posts(deve_pular=self._pular_se_nao_salvo):
+                    try:
+                        res = self._engagement_service.registrar_engajamentos_post(post, engagements)
+                        result.posts_processados     += 1
+                        result.interacoes_inseridas  += res["inseridos"]
+                        result.duplicatas_ignoradas  += res["duplicatas"]
+
+                        logger.info(
+                            "[Post %d] %s | inseridos: %d | dups: %d",
+                            result.posts_processados,
+                            post.post_id,
+                            res["inseridos"],
+                            res["duplicatas"],
+                        )
+                    except Exception as exc:
+                        logger.error("Falha ao persistir post %s: %s", post.post_id, exc, exc_info=True)
+
+        except KeyboardInterrupt:
+            logger.info("Coleta interrompida pelo usuário (Ctrl+C).")
+            result.erro = "Interrompido pelo usuário"
+        except Exception as exc:
+            logger.error("Erro fatal no pipeline: %s", exc, exc_info=True)
+            result.erro = str(exc)
+        finally:
+            result.duracao_segundos = time.time() - inicio
+            self._db.dispose()
+
+        self._log_resumo(result)
+        return result
+
     def _log_resumo(self, result: PipelineResult) -> None:
         logger.info("=" * 60)
         logger.info("PIPELINE CONCLUÍDO")

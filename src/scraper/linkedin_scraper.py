@@ -1371,38 +1371,45 @@ class LinkedInScraper:
                         }
                         if (zoneEls.length === 0) return [];
 
-                        // ── Coleta todos os links na zona ──────────────────────
-                        const allLinks = [];
-                        for (const z of zoneEls) {
-                            allLinks.push(
-                                ...Array.from(z.querySelectorAll('a[href*="/in/"], a[href*="/company/"]'))
-                            );
-                        }
-
-                        // ── Filtra: apenas links novos (não estavam antes da expansão) ──
+                        // ── Coleta links por zona ──────────────────────────────
+                        // pre_hrefs só filtra links DENTRO do card (autor/menções no corpo).
+                        // Links nos elementos irmãos (área de comentários expandida) são
+                        // sempre incluídos — mesmo que a pessoa esteja mencionada no post.
                         const results = [];
-                        for (const link of allLinks) {
-                            const href = link.href.split('?')[0].replace(/\\/$/, '');
-                            if (!href) continue;
-                            if (preH.has(href)) continue;        // link pré-expansão (autor/menção)
-                            if (seen.includes(href)) continue;   // já coletado
-                            let name = link.textContent.trim().split('\\n')[0].trim();
-                            if (!name || name.length < 2 || name.length >= 120) continue;
-                            if (name.toLowerCase().startsWith(EMPRESA)) continue;
+                        for (const zone of zoneEls) {
+                            const isCard = (zone === cardEl);
+                            const links = Array.from(zone.querySelectorAll('a[href*="/in/"], a[href*="/company/"]'));
+                            for (const link of links) {
+                                const href = link.href.split('?')[0].replace(/\\/$/, '');
+                                if (!href) continue;
+                                // Filtra autor/menções no card, MAS não filtra se o link
+                                // está dentro de um item de comentário (autor comentando no próprio post).
+                                if (isCard && preH.has(href)) {
+                                    const inComment = !!link.closest(
+                                        '[class*="comment-item"], [data-comment-id], ' +
+                                        '[class*="comments-comment"]'
+                                    );
+                                    if (!inComment) continue;
+                                }
+                                if (seen.includes(href)) continue;       // já coletado
+                                let name = link.textContent.trim().split('\\n')[0].trim();
+                                if (!name || name.length < 2 || name.length >= 120) continue;
+                                if (name.toLowerCase().startsWith(EMPRESA)) continue;
 
-                            seen.push(href);
+                                seen.push(href);
 
-                            // Tenta extrair texto do comentário subindo na árvore
-                            let text = '';
-                            let p = link.parentElement;
-                            for (let d = 0; d < 8 && p; d++, p = p.parentElement) {
-                                const textEl = p.querySelector(
-                                    '[class*="comment__text"], [class*="main-content"], ' +
-                                    '[class*="inline-show-more-text"], [class*="comment-text"]'
-                                );
-                                if (textEl) { text = textEl.textContent.trim().slice(0, 200); break; }
+                                // Tenta extrair texto do comentário subindo na árvore
+                                let text = '';
+                                let p = link.parentElement;
+                                for (let d = 0; d < 8 && p; d++, p = p.parentElement) {
+                                    const textEl = p.querySelector(
+                                        '[class*="comment__text"], [class*="main-content"], ' +
+                                        '[class*="inline-show-more-text"], [class*="comment-text"]'
+                                    );
+                                    if (textEl) { text = textEl.textContent.trim().slice(0, 200); break; }
+                                }
+                                results.push({ href, name, text });
                             }
-                            results.push({ href, name, text });
                         }
                         return results;
                     }""",
