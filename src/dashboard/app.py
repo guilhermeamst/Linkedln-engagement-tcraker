@@ -737,7 +737,7 @@ def _render_ranking_completo(ranking) -> None:
 
     styled = (
         df.style
-        .applymap(_cor_posicao, subset=["Posição"])
+        .map(_cor_posicao, subset=["Posição"])
         .format(fmt_cols)
         .set_properties(**{"text-align": "center"})
         .hide(axis="index")
