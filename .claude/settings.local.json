@@ -16,7 +16,8 @@
       "Bash(find \"c:/Users/guilhermeam/OneDrive - Armco do Brasil S.A/Perfil/Documentos/Organização/ARMCO/Linkdeln Engagement Tcraker \\(opc 1\\)\" -name \"*.db\" -o -name \"*.shm\" -o -name \"*.wal\")",
       "Bash(ls -la \"c:/Users/guilhermeam/OneDrive - Armco do Brasil S.A/Perfil/Documentos/Organização/ARMCO/Linkdeln Engagement Tcraker \\(opc 1\\)/linkedin_engagement.db\")",
       "Bash(python3 -c \":*)",
-      "Bash(python -m py_compile src/dashboard/app.py src/services/analytics_service.py src/services/engagement_service.py src/repository/engagement_repository.py)"
+      "Bash(python -m py_compile src/dashboard/app.py src/services/analytics_service.py src/services/engagement_service.py src/repository/engagement_repository.py)",
+      "Bash(python -m streamlit --version)"
     ]
   }
 }

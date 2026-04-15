@@ -431,7 +431,7 @@ def _render_sidebar() -> None:
             st.toast("Dados atualizados com sucesso!", icon="✅")
 
         st.markdown("---")
-        st.caption("Dados desde 01/03/2026")
+        st.caption("Dados desde 01/04/2026")
 
 
 # --------------------------------------------------------------------------- #
@@ -830,7 +830,7 @@ def main() -> None:
         data_min_global = datas_validas.min().date()
         data_max_global = datas_validas.max().date()
     else:
-        data_min_global = date(2026, 1, 6)
+        data_min_global = date(2026, 4, 1)
         data_max_global = date.today()
 
     # Renderiza cabeçalho com filtro de data
@@ -868,7 +868,7 @@ def main() -> None:
     _render_engajamento_por_post(dados["df_posts"])
 
     st.markdown("---")
-    st.caption("LinkedIn Engagement Tracker | Dados desde 01/03/2026 | Uso interno")
+    st.caption("LinkedIn Engagement Tracker | Dados desde 01/04/2026 | Uso interno")
 
 
 if __name__ == "__main__":
