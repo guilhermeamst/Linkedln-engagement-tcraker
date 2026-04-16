@@ -19,7 +19,8 @@
       "Bash(python -m py_compile src/dashboard/app.py src/services/analytics_service.py src/services/engagement_service.py src/repository/engagement_repository.py)",
       "Bash(python -m streamlit --version)",
       "Bash(sqlite3 linkedin_engagement.db \".tables\")",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(sqlite3 linkedin_engagement.db \"SELECT * FROM posts WHERE post_id = '7450498254850551809';\")"
     ]
   }
 }
