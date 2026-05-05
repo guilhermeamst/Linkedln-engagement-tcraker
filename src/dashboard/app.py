@@ -431,7 +431,7 @@ def _render_sidebar() -> None:
             st.toast("Dados atualizados com sucesso!", icon="✅")
 
         st.markdown("---")
-        st.caption("Dados desde 01/04/2026")
+        st.caption("Dados desde 01/04/2026, Atualizado dia 05/05/2026")
 
 
 # --------------------------------------------------------------------------- #
