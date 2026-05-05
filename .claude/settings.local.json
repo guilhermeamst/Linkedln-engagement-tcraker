@@ -20,7 +20,17 @@
       "Bash(python -m streamlit --version)",
       "Bash(sqlite3 linkedin_engagement.db \".tables\")",
       "Bash(python3 -c ' *)",
-      "Bash(sqlite3 linkedin_engagement.db \"SELECT * FROM posts WHERE post_id = '7450498254850551809';\")"
+      "Bash(sqlite3 linkedin_engagement.db \"SELECT * FROM posts WHERE post_id = '7450498254850551809';\")",
+      "Bash(Get-ChildItem -Path \".\" -Recurse -Force)",
+      "Bash(Select-Object -First 30)",
+      "PowerShell(Get-ChildItem -Path \".\" -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Extension -match '\\\\.\\(db|sqlite|json|csv\\)$' } | Select-Object -First 20)",
+      "PowerShell(echo $sql)",
+      "PowerShell(sqlite3 $dbPath)",
+      "PowerShell($dbPath = \"linkedin_engagement.db\")",
+      "PowerShell(python --version)",
+      "PowerShell(python inspect_db.py)",
+      "PowerShell(python remove_users.py)",
+      "PowerShell(python verify_removal.py)"
     ]
   }
 }
