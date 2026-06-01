@@ -30,7 +30,8 @@
       "PowerShell(python --version)",
       "PowerShell(python inspect_db.py)",
       "PowerShell(python remove_users.py)",
-      "PowerShell(python verify_removal.py)"
+      "PowerShell(python verify_removal.py)",
+      "Bash(python -c ' *)"
     ]
   }
 }
