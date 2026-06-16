@@ -40,9 +40,12 @@ logger = get_logger(__name__)
 
 class _Selectors:
     # Login
-    EMAIL_INPUT    = 'input[name="session_key"]'
-    PASSWORD_INPUT = 'input[name="session_password"]'
-    LOGIN_BUTTON   = 'button[type="submit"]'
+    # LinkedIn removed os atributos name="session_key"/"session_password" e o
+    # botão de envio deixou de ser type="submit". Os seletores abaixo usam
+    # type+:visible (a página renderiza inputs/botões duplicados ocultos).
+    EMAIL_INPUT    = 'input[type="email"]:visible'
+    PASSWORD_INPUT = 'input[type="password"]:visible'
+    LOGIN_BUTTON   = 'button:visible'
 
     # Cards de post na página de admin.
     # Usa ^= (começa com) para evitar pegar elementos aninhados (comentários,
@@ -373,13 +376,26 @@ class LinkedInScraper:
 
         for tentativa in range(1, self._scraper_cfg.retry_attempts + 1):
             try:
-                self._page.goto("https://www.linkedin.com/login", wait_until="networkidle")
+                # "networkidle" nunca é alcançado nessa página (LinkedIn mantém
+                # conexões de telemetria/long-poll abertas) e sempre expira em 30s.
+                self._page.goto("https://www.linkedin.com/login", wait_until="domcontentloaded")
+                self._page.wait_for_selector(_Selectors.EMAIL_INPUT, timeout=self._scraper_cfg.wait_timeout_ms)
                 self._aguardar_aleatoriamente(1.0, 2.0)
                 self._page.fill(_Selectors.EMAIL_INPUT, self._cfg.email)
                 self._aguardar_aleatoriamente(0.3, 0.8)
                 self._page.fill(_Selectors.PASSWORD_INPUT, self._cfg.password)
                 self._aguardar_aleatoriamente(0.5, 1.0)
-                self._page.click(_Selectors.LOGIN_BUTTON)
+
+                # O botão de envio só tem o texto "Entrar"/"Sign in" puro — os
+                # demais ("Entrar com a Microsoft" etc.) também casam com :visible.
+                botao = self._page.locator(_Selectors.LOGIN_BUTTON).filter(
+                    has_text=re.compile(r"^(Entrar|Sign in)$")
+                )
+                if botao.count() > 0:
+                    botao.first.click()
+                else:
+                    logger.debug("Botão de login não identificado por texto — enviando via Enter.")
+                    self._page.locator(_Selectors.PASSWORD_INPUT).press("Enter")
 
                 try:
                     self._page.wait_for_url(
